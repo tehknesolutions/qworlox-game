@@ -1,3 +1,5 @@
+import { buildMovementPath } from '../board/path.mjs';
+
 const TEAM_ORDER = ['blue', 'red'];
 
 function makeTeam(id) {
@@ -6,14 +8,15 @@ function makeTeam(id) {
     characters: [1, 2].map(index => ({
       id: `${id}-${index}`,
       status: 'base',
-      position: null
+      position: null,
+      nodeId: null
     }))
   };
 }
 
 export function createGame({ routeLength }) {
-  if (!Number.isInteger(routeLength) || routeLength < 1) {
-    throw new TypeError('routeLength must be a positive integer');
+  if (!Number.isInteger(routeLength) || routeLength < 4 || routeLength % 2 !== 0) {
+    throw new TypeError('routeLength must be an even integer >= 4');
   }
 
   return {
@@ -50,16 +53,16 @@ export function moveCharacter(game, { characterId, roll }) {
 
   const next = structuredClone(game);
   const character = next.teams[next.activeTeam].characters.find(item => item.id === characterId);
+  const path = buildMovementPath({ routeLength: next.routeLength, team: next.activeTeam });
 
   if (character.status === 'base') {
     character.status = 'route';
     character.position = 0;
+    character.nodeId = path[0];
   } else {
-    character.position += roll;
-    if (character.position >= next.routeLength) {
-      character.status = 'goal';
-      character.position = next.routeLength;
-    }
+    character.position = Math.min(character.position + roll, next.routeLength);
+    character.nodeId = path[character.position];
+    if (character.position >= next.routeLength) character.status = 'goal';
   }
 
   if (next.teams[next.activeTeam].characters.every(item => item.status === 'goal')) {
