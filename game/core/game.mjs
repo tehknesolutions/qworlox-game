@@ -1,4 +1,5 @@
 import { buildMovementPath } from '../board/path.mjs';
+import { createTerritoryState, territoryAtNode } from '../board/territory-state.mjs';
 
 const TEAM_ORDER = ['blue', 'red'];
 
@@ -19,10 +20,12 @@ export function createGame({ routeLength }) {
     throw new TypeError('routeLength must be an even integer >= 4');
   }
 
+  const territory = createTerritoryState({ routeLength });
   return {
     routeLength,
     activeTeam: 'blue',
     winner: null,
+    territory,
     teams: {
       blue: makeTeam('blue'),
       red: makeTeam('red')
@@ -64,6 +67,8 @@ export function moveCharacter(game, { characterId, roll }) {
     character.nodeId = path[character.position];
     if (character.position >= next.routeLength) character.status = 'goal';
   }
+
+  character.territory = territoryAtNode(next.territory, character.nodeId);
 
   if (next.teams[next.activeTeam].characters.every(item => item.status === 'goal')) {
     next.winner = next.activeTeam;
