@@ -19,30 +19,26 @@ export function playTurn(match, { characterId, roll, choices = [] }) {
   const game = structuredClone(match.game);
   const character = game.teams[movedTeam].characters.find(item => item.id === characterId);
   if (!character) throw new Error(`unknown character: ${characterId}`);
-  if (character.status === 'base') throw new Error(`${characterId} must be placed on the board before graph movement`);
-  if (!character.nodeId) throw new Error(`${characterId} has no graph node`);
 
-  const fromNodeId = character.nodeId;
-  const movement = advanceOnGraph(match.graph, { startNodeId: fromNodeId, steps: roll, choices });
-  character.nodeId = movement.nodeId;
-  character.position = null;
+  const fromNodeId = character.nodeId ?? null;
 
-  game.events.push({ seq: game.events.length + 1, type: 'ROLL', team: movedTeam, roll });
-  game.events.push({
-    seq: game.events.length + 1,
-    type: 'MOVE',
-    team: movedTeam,
-    characterId,
-    fromNodeId,
-    toNodeId: character.nodeId
-  });
-  game.events.push({
-    seq: game.events.length + 1,
-    type: 'LAND',
-    team: movedTeam,
-    characterId,
-    nodeId: character.nodeId
-  });
+  if (character.status === 'base') {
+    if (roll !== 6) throw new Error(`${characterId} requires a 6 to leave base`);
+    character.status = 'route';
+    character.nodeId = match.graph.kingObjectives[movedTeam];
+    character.position = null;
+  } else {
+    if (!character.nodeId) throw new Error(`${characterId} has no graph node`);
+    const movement = advanceOnGraph(match.graph, {
+      startNodeId: character.nodeId,
+      steps: roll,
+      choices
+    });
+    character.nodeId = movement.nodeId;
+    character.position = null;
+  }
+
+  appendTurnEvents(game, { movedTeam, characterId, roll, fromNodeId, toNodeId: character.nodeId });
 
   const victory = evaluateKingReach({
     graph: match.graph,
@@ -67,6 +63,25 @@ export function playTurn(match, { characterId, roll, choices = [] }) {
   }
 
   return { ...match, game };
+}
+
+function appendTurnEvents(game, { movedTeam, characterId, roll, fromNodeId, toNodeId }) {
+  game.events.push({ seq: game.events.length + 1, type: 'ROLL', team: movedTeam, roll });
+  game.events.push({
+    seq: game.events.length + 1,
+    type: 'MOVE',
+    team: movedTeam,
+    characterId,
+    fromNodeId,
+    toNodeId
+  });
+  game.events.push({
+    seq: game.events.length + 1,
+    type: 'LAND',
+    team: movedTeam,
+    characterId,
+    nodeId: toNodeId
+  });
 }
 
 function assertMatch(match) {
