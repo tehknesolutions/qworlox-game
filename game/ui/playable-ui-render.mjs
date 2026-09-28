@@ -23,8 +23,10 @@ export function renderPlayableHTML(ui) {
   const steps = ui.remainingSteps > 0 ? `<span class="qworlox-steps">Steps: ${escapeHTML(ui.remainingSteps)}</span>` : '';
   const announcement = ui.announcement ? `<div class="qworlox-victory" role="status">${escapeHTML(ui.announcement)}</div>` : '';
   const phase = escapeHTML(ui.feedbackPhase ?? 'idle');
+  const logEntries = (ui.matchLog ?? []).map(entry => `<li>${escapeHTML(entry)}</li>`).join('');
+  const matchLog = `<aside class="qworlox-match-log" data-match-log aria-label="Match log"><strong>MATCH LOG</strong><ol>${logEntries}</ol></aside>`;
 
-  return `<main class="qworlox-shell" data-interaction-locked="${ui.interactionLocked ? 'true' : 'false'}" data-feedback-phase="${phase}"><header class="qworlox-hud"><strong class="qworlox-turn">Turn: ${escapeHTML(String(ui.activeTeam).toUpperCase())}</strong><div class="qworlox-roll-state"><span>${die}</span>${steps}</div><button type="button" data-action="roll"${ui.interactionLocked ? ' disabled' : ''}>ROLL D6</button></header>${announcement}<div class="qworlox-arena">${reserve('blue')}<section class="qworlox-board" data-qworlox-board aria-label="Q'Worlox King Reach board"><div class="qworlox-route-layer" data-route-layer aria-hidden="true"></div>${nodes}</section>${reserve('red')}</div></main>`;
+  return `<main class="qworlox-shell" data-interaction-locked="${ui.interactionLocked ? 'true' : 'false'}" data-feedback-phase="${phase}"><header class="qworlox-hud"><strong class="qworlox-turn">Turn: ${escapeHTML(String(ui.activeTeam).toUpperCase())}</strong><div class="qworlox-roll-state"><span>${die}</span>${steps}</div><button type="button" data-action="roll"${ui.interactionLocked ? ' disabled' : ''}>ROLL D6</button></header>${announcement}<div class="qworlox-arena">${reserve('blue')}<section class="qworlox-board" data-qworlox-board aria-label="Q'Worlox King Reach board"><div class="qworlox-route-layer" data-route-layer aria-hidden="true"></div>${nodes}</section>${reserve('red')}</div>${matchLog}</main>`;
 }
 
 function label(value) { return String(value).replaceAll('_', ' '); }
