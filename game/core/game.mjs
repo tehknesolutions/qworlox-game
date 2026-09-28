@@ -41,6 +41,30 @@ export function moveCharacter(game, { characterId, roll }) {
   return next;
 }
 
+export function resolveTurn(game, graph, { characterId, roll }) {
+  const movedTeam = game.activeTeam;
+  const beforeCharacter = game.teams[movedTeam].characters.find(item => item.id === characterId);
+  const fromNodeId = beforeCharacter?.nodeId ?? null;
+  let moved = moveCharacter(game, { characterId, roll });
+  const character = moved.teams[movedTeam].characters.find(item => item.id === characterId);
+
+  moved = appendEvents(moved, [
+    { type: 'ROLL', team: movedTeam, roll },
+    { type: 'MOVE', team: movedTeam, characterId, fromNodeId, toNodeId: character.nodeId },
+    { type: 'LAND', team: movedTeam, characterId, nodeId: character.nodeId }
+  ]);
+
+  const landing = resolveLanding(moved, graph, character.nodeId);
+  return {
+    game: landing.game,
+    characterId,
+    nodeId: character.nodeId,
+    trigger: landing.trigger,
+    card: landing.card,
+    events: landing.game.events.slice(game.events.length)
+  };
+}
+
 export function resolveLandingTrigger(graph, nodeId) {
   const node = graph?.nodes?.get(nodeId);
   if (!node) throw new Error(`unknown landing node: ${nodeId}`);
@@ -99,6 +123,14 @@ export function executeCardCommands(game, commands) {
     throw new Error(`unknown game command: ${command.type}`);
   }
   return { game: next, events: emitted };
+}
+
+function appendEvents(game, events) {
+  const next = structuredClone(game);
+  for (const event of events) {
+    next.events.push({ seq: next.events.length + 1, ...event });
+  }
+  return next;
 }
 
 function isLegalForRoll(character, roll) {
