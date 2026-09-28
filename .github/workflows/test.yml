@@ -19,9 +19,53 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Run tests
-        run: npm test
+
+      - name: Capture environment
+        shell: bash
+        run: |
+          {
+            echo "node=$(node --version)"
+            echo "npm=$(npm --version)"
+            echo "sha=$GITHUB_SHA"
+          } | tee ci-environment.txt
+
+      - name: Run tests with persistent diagnostics
+        id: tests
+        shell: bash
+        run: |
+          set +e
+          npm test 2>&1 | tee test-output.txt
+          code=${PIPESTATUS[0]}
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Q'Worlox test diagnostics"
+            echo
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Node: \`$(node --version)\`"
+            echo "- npm: \`$(npm --version)\`"
+            echo "- Exit code: \`$code\`"
+            echo
+            echo '<details><summary>npm test output</summary>'
+            echo
+            echo '```text'
+            tail -n 200 test-output.txt
+            echo '```'
+            echo '</details>'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$code"
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qworlox-test-diagnostics-${{ github.run_id }}
+          path: |
+            test-output.txt
+            ci-environment.txt
+          if-no-files-found: warn
+          retention-days: 7
