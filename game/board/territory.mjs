@@ -19,23 +19,25 @@ export function buildTerritoryGraph({ routeLength }) {
   addNode('blue-goal', 'GOAL', 'blue');
   addNode('red-goal', 'GOAL', 'red');
 
+  // Each approach contains half - 1 lane nodes; the shared center is the
+  // exact midpoint of the movement path.
   for (const team of ['blue', 'red']) {
-    for (let index = 1; index <= half; index += 1) {
+    for (let index = 1; index < half; index += 1) {
       addNode(`${team}-${index}`, 'LANE', team);
     }
     connect(`${team}-entry`, `${team}-1`);
-    for (let index = 1; index < half; index += 1) {
+    for (let index = 1; index < half - 1; index += 1) {
       connect(`${team}-${index}`, `${team}-${index + 1}`);
     }
-    connect(`${team}-${half}`, 'center');
+    connect(`${team}-${half - 1}`, 'center');
   }
 
-  // Territory dispute: after reaching the shared center, a team advances
-  // through the opponent-facing half toward the opposing upper territory.
-  connect('center', `red-${half}`);
-  connect('center', `blue-${half}`);
+  // After the shared center, a team crosses the opponent-facing half toward
+  // the opposing upper territory.
+  connect('center', `red-${half - 1}`);
+  connect('center', `blue-${half - 1}`);
 
-  for (let index = half; index > 1; index -= 1) {
+  for (let index = half - 1; index > 1; index -= 1) {
     connect(`blue-${index}`, `blue-${index - 1}`);
     connect(`red-${index}`, `red-${index - 1}`);
   }
