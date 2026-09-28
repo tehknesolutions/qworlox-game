@@ -35,6 +35,7 @@ export function replayEvents(events) {
 
     switch (event.type) {
       case 'ROLL':
+        if (pendingMove) throw new Error('ROLL while MOVE is awaiting LAND');
         state.rolls.push({ seq: event.seq, team: event.team, roll: event.roll });
         lastRoll = event;
         break;
