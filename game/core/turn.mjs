@@ -1,3 +1,4 @@
+import { buildMovementPath } from '../board/path.mjs';
 import { detectEncounter } from './encounter.mjs';
 import { resolveEncounterCombat } from './encounter-combat.mjs';
 import { applyCombatConsequence } from './combat-consequence.mjs';
@@ -14,6 +15,7 @@ export function resolveTurnWithEncounter(game, { characterId, roll, combat } = {
   if (!character) throw new Error(`unknown character: ${characterId}`);
   if (character.status === 'goal') throw new Error('goal character cannot move');
 
+  const path = buildMovementPath({ routeLength: next.routeLength, team });
   if (character.status === 'base') {
     if (roll !== 6) throw new Error('base character requires a 6');
     character.status = 'route';
@@ -22,13 +24,24 @@ export function resolveTurnWithEncounter(game, { characterId, roll, combat } = {
     character.position = Math.min(character.position + roll, next.routeLength);
     if (character.position >= next.routeLength) character.status = 'goal';
   }
+  character.nodeId = path[character.position];
 
   const occupants = Object.values(next.teams)
     .flatMap(side => side.characters)
-    .filter(item => item.id !== character.id && item.status !== 'base')
-    .map(item => ({ id: item.id, team: sideFor(next, item.id), nodeId: String(item.position) }));
+    .filter(item => item.id !== character.id && item.status !== 'base' && item.nodeId)
+    .map(item => ({
+      id: item.id,
+      team: sideFor(next, item.id),
+      nodeId: item.nodeId,
+      attributes: item.attributes ?? {}
+    }));
 
-  const mover = { id: character.id, team, nodeId: String(character.position), attributes: character.attributes ?? {} };
+  const mover = {
+    id: character.id,
+    team,
+    nodeId: character.nodeId,
+    attributes: character.attributes ?? {}
+  };
   const encounter = detectEncounter({ mover, occupants });
 
   let combatResult = null;
@@ -37,7 +50,12 @@ export function resolveTurnWithEncounter(game, { characterId, roll, combat } = {
     const defender = findCharacter(next, encounter.defenderId);
     combatResult = resolveEncounterCombat({
       attacker: mover,
-      defender: { ...defender, team: sideFor(next, defender.id), nodeId: String(defender.position) },
+      defender: {
+        ...defender,
+        team: sideFor(next, defender.id),
+        nodeId: defender.nodeId,
+        attributes: defender.attributes ?? {}
+      },
       ...combat
     }).combat;
 
@@ -47,7 +65,11 @@ export function resolveTurnWithEncounter(game, { characterId, roll, combat } = {
     const consequence = applyCombatConsequence({ combat: combatResult, positions, routeLength: next.routeLength });
     for (const [id, position] of Object.entries(consequence.positions)) {
       const piece = findCharacter(next, id);
-      if (piece) piece.position = position;
+      if (piece) {
+        piece.position = position;
+        const pieceTeam = sideFor(next, id);
+        piece.nodeId = buildMovementPath({ routeLength: next.routeLength, team: pieceTeam })[position];
+      }
     }
   }
 
