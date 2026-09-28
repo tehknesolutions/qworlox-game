@@ -2,6 +2,12 @@
 body { margin: 0; min-height: 100vh; font-family: Inter, system-ui, sans-serif; background: #10131a; color: #f6f7fb; }
 button { font: inherit; }
 .qworlox-shell { width: min(1240px, 96vw); margin: 0 auto; padding: 2rem 0; }
+.qworlox-playtest-guide { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem 1.2rem; margin-bottom: 1rem; padding: .9rem 1rem; border: 1px solid #4b5365; border-radius: 1rem; background: #151a24; }
+.qworlox-playtest-guide > div { display: flex; flex-direction: column; gap: .25rem; }
+.qworlox-playtest-guide strong { font-size: .72rem; letter-spacing: .1em; color: #f4d35e; }
+.qworlox-playtest-guide span { font-weight: 800; line-height: 1.35; }
+.qworlox-playtest-guide small { grid-column: 1 / -1; opacity: .65; }
+[data-feedback-phase="victory"] .qworlox-playtest-guide { border-color: #f4d35e; }
 .qworlox-hud { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 1rem; margin-bottom: 1rem; padding: .85rem 1rem; border: 1px solid #353b49; border-radius: 1rem; background: #151a24; }
 .qworlox-turn { font-size: clamp(1.15rem, 3vw, 1.8rem); letter-spacing: .06em; }
 .qworlox-roll-state { display: flex; gap: .75rem; align-items: center; font-weight: 900; font-variant-numeric: tabular-nums; }
@@ -26,7 +32,7 @@ button { font: inherit; }
 [data-node-id="south-crossing"] { grid-area: south; }
 [data-node-id="red-approach"] { grid-area: redapproach; }
 [data-node-id="red-king"] { grid-area: redking; border-color: #ff5757; }
-[data-legal-choice="true"] { border-color: #f4d35e; cursor: pointer; transform: translateY(-3px); box-shadow: 0 0 0 3px rgba(244,211,94,.18), 0 10px 30px rgba(0,0,0,.25); animation: legal-choice-pulse .9s ease-in-out infinite alternate; }
+[data-legal-choice="true"] { border-color: #f4d35e; cursor: pointer; transform: translateY(-3px); box-shadow: 0 0 0 3px rgba(244, 211, 94, .18), 0 10px 30px rgba(0,0,0,.25); animation: legal-choice-pulse .9s ease-in-out infinite alternate; }
 [data-current-move="true"] { border-color: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.16); }
 .qworlox-node__region { font-size: .72rem; opacity: .7; letter-spacing: .08em; }
 .qworlox-king { font-size: 1.1rem; font-weight: 900; }
@@ -48,4 +54,4 @@ button { font: inherit; }
 .qworlox-message { width: min(1240px, 96vw); margin: 0 auto 2rem; opacity: .85; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; } }
 @media (max-width: 900px) { .qworlox-arena { grid-template-columns: 1fr; } .qworlox-reserve { min-height: auto; } .qworlox-reserve > div { flex-direction: row; flex-wrap: wrap; justify-content: center; } }
-@media (max-width: 760px) { .qworlox-hud { grid-template-columns: 1fr auto; } .qworlox-roll-state { grid-column: 1 / -1; grid-row: 2; } .qworlox-board { grid-template-columns: 1fr; grid-template-areas: "blueking" "blueapproach" "north" "center" "south" "redapproach" "redking"; min-height: auto; } .qworlox-route-layer { display: none; } .qworlox-node { min-height: 110px; } }
+@media (max-width: 760px) { .qworlox-playtest-guide { grid-template-columns: 1fr; } .qworlox-playtest-guide small { grid-column: 1; } .qworlox-hud { grid-template-columns: 1fr auto; } .qworlox-roll-state { grid-column: 1 / -1; grid-row: 2; } .qworlox-board { grid-template-columns: 1fr; grid-template-areas: "blueking" "blueapproach" "north" "center" "south" "redapproach" "redking"; min-height: auto; } .qworlox-route-layer { display: none; } .qworlox-node { min-height: 110px; } }
