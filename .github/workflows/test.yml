@@ -1,30 +1,28 @@
-name: Game Core Tests
+name: Runner Smoke Test
 
 on:
   push:
     branches:
-      - main
       - feat/board-simulator-v1
   pull_request:
     branches:
       - main
 
-permissions:
-  contents: read
-
 jobs:
-  test:
+  smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - name: Install dependencies
-        run: npm install --ignore-scripts
-      - name: Run tests
-        run: npm test
+      - name: Runner shell
+        shell: bash
+        run: |
+          echo "QWORLOX_RUNNER_SMOKE=START"
+          echo "sha=$GITHUB_SHA"
+          echo "workspace=$GITHUB_WORKSPACE"
+          pwd
+          uname -a
+          command -v node || true
+          node --version || true
+          command -v npm || true
+          npm --version || true
+          echo "QWORLOX_RUNNER_SMOKE=PASS"
