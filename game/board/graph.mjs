@@ -1,3 +1,5 @@
+const BOARD_TRIGGER_TYPES = new Set(['DRAW_CARD']);
+
 export function buildBoardGraph(board) {
   const nodes = new Map();
   const forwardEdges = [];
@@ -7,7 +9,8 @@ export function buildBoardGraph(board) {
   for (const lane of board.lanes) {
     for (const node of lane.nodes) {
       if (nodes.has(node.id)) throw new Error(`duplicate board node: ${node.id}`);
-      nodes.set(node.id, { ...node, laneId: lane.id });
+      const trigger = normalizeBoardTrigger(node.trigger);
+      nodes.set(node.id, { ...node, trigger, laneId: lane.id });
       adjacency.set(node.id, []);
     }
 
@@ -30,6 +33,14 @@ export function buildBoardGraph(board) {
   }
 
   return { nodes, forwardEdges, lateralEdges, adjacency };
+}
+
+function normalizeBoardTrigger(trigger) {
+  if (trigger == null) return null;
+  if (!trigger.type || !BOARD_TRIGGER_TYPES.has(trigger.type)) {
+    throw new Error(`unknown board trigger: ${trigger.type ?? 'missing'}`);
+  }
+  return { ...trigger };
 }
 
 export function shortestPathLength(graph, start, goal) {
