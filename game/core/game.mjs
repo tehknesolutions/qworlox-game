@@ -41,6 +41,21 @@ export function moveCharacter(game, { characterId, roll }) {
   return next;
 }
 
+export function resolveTurn(game, graph, { characterId, roll }) {
+  const moved = moveCharacter(game, { characterId, roll });
+  const movedTeam = game.activeTeam;
+  const character = moved.teams[movedTeam].characters.find(item => item.id === characterId);
+  const landing = resolveLanding(moved, graph, character.nodeId);
+  return {
+    game: landing.game,
+    characterId,
+    nodeId: character.nodeId,
+    trigger: landing.trigger,
+    card: landing.card,
+    events: landing.events
+  };
+}
+
 export function resolveLandingTrigger(graph, nodeId) {
   const node = graph?.nodes?.get(nodeId);
   if (!node) throw new Error(`unknown landing node: ${nodeId}`);
