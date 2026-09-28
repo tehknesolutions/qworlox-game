@@ -11,6 +11,9 @@ export function createBrowserController({ random = Math.random } = {}) {
   let pendingNodeId = null;
   let feedbackPhase = 'idle';
   let currentMoveNodeId = null;
+  const matchLog = [];
+
+  function log(entry) { matchLog.push(entry); }
 
   function view() {
     const ui = projectPlayableUI(match, { selectedCharacterId });
@@ -19,9 +22,8 @@ export function createBrowserController({ random = Math.random } = {}) {
     ui.remainingSteps = remainingSteps;
     ui.feedbackPhase = match.game.winner ? 'victory' : feedbackPhase;
     ui.currentMoveNodeId = currentMoveNodeId;
-    if (pendingRoll !== null && pendingNodeId) {
-      ui.legalNextNodes = [...new Set(match.graph.adjacency.get(pendingNodeId) ?? [])];
-    }
+    ui.matchLog = [...matchLog];
+    if (pendingRoll !== null && pendingNodeId) ui.legalNextNodes = [...new Set(match.graph.adjacency.get(pendingNodeId) ?? [])];
     return { ui, html: renderPlayableHTML(ui), roll: pendingRoll ?? lastRoll, pendingSteps: remainingSteps };
   }
 
@@ -34,6 +36,7 @@ export function createBrowserController({ random = Math.random } = {}) {
     selectedCharacterId = characterId;
     feedbackPhase = 'selected';
     currentMoveNodeId = character.nodeId ?? null;
+    log(`${characterId.toUpperCase()} selected`);
     return view();
   }
 
@@ -44,12 +47,18 @@ export function createBrowserController({ random = Math.random } = {}) {
     lastRoll = value;
     const team = match.game.activeTeam;
     const character = match.game.teams[team].characters.find(item => item.id === selectedCharacterId);
+    log(`${selectedCharacterId.toUpperCase()} rolled ${value}`);
 
     if (character.status === 'base') {
+      const beforeNode = character.nodeId;
       match = playTurn(match, { characterId: selectedCharacterId, roll: value });
+      const after = match.game.teams[team].characters.find(item => item.id === selectedCharacterId);
+      if (beforeNode !== after.nodeId && after.nodeId) log(`${selectedCharacterId.toUpperCase()} entered route at ${after.nodeId}`);
       selectedCharacterId = null;
       currentMoveNodeId = null;
       feedbackPhase = match.game.winner ? 'victory' : 'turn-changed';
+      if (match.game.winner) log(`KING REACHED — ${match.game.winner.toUpperCase()} WINS`);
+      else log(`Turn ${match.game.activeTeam.toUpperCase()}`);
       return view();
     }
 
@@ -69,15 +78,19 @@ export function createBrowserController({ random = Math.random } = {}) {
     pendingNodeId = nodeId;
     currentMoveNodeId = nodeId;
     feedbackPhase = 'moving';
+    log(`${selectedCharacterId.toUpperCase()} chose ${nodeId}`);
     if (pendingChoices.length < pendingRoll) return view();
 
-    match = playTurn(match, { characterId: selectedCharacterId, roll: pendingRoll, choices: [...pendingChoices] });
+    const movingCharacterId = selectedCharacterId;
+    match = playTurn(match, { characterId: movingCharacterId, roll: pendingRoll, choices: [...pendingChoices] });
     selectedCharacterId = null;
     pendingRoll = null;
     pendingChoices = [];
     pendingNodeId = null;
     currentMoveNodeId = null;
     feedbackPhase = match.game.winner ? 'victory' : 'turn-changed';
+    if (match.game.winner) log(`KING REACHED — ${match.game.winner.toUpperCase()} WINS`);
+    else log(`Turn ${match.game.activeTeam.toUpperCase()}`);
     return view();
   }
 
