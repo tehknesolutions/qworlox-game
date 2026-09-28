@@ -20,6 +20,7 @@ export function replayEvents(events) {
   };
 
   let lastRoll = null;
+  let pendingMove = null;
 
   for (let index = 0; index < events.length; index += 1) {
     const event = events[index];
@@ -40,9 +41,11 @@ export function replayEvents(events) {
       case 'MOVE':
         applyMove(state, event, lastRoll);
         lastRoll = null;
+        pendingMove = event;
         break;
       case 'LAND':
-        applyLanding(state, event);
+        applyLanding(state, event, pendingMove);
+        pendingMove = null;
         break;
       case 'CARD_DRAWN':
         state.cardsDrawn.push({ seq: event.seq, cardId: event.cardId });
@@ -76,9 +79,20 @@ function applyMove(state, event, lastRoll) {
   };
 }
 
-function applyLanding(state, event) {
+function applyLanding(state, event, pendingMove) {
+  if (!pendingMove) {
+    throw new Error(`LAND without immediately preceding MOVE for ${event.characterId}`);
+  }
+
   const character = state.characters[event.characterId];
-  if (!character || character.nodeId !== event.nodeId || character.team !== event.team) {
+  if (
+    pendingMove.characterId !== event.characterId ||
+    pendingMove.team !== event.team ||
+    pendingMove.toNodeId !== event.nodeId ||
+    !character ||
+    character.nodeId !== event.nodeId ||
+    character.team !== event.team
+  ) {
     throw new Error(`inconsistent LAND event for ${event.characterId}`);
   }
 
