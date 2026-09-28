@@ -26,7 +26,8 @@ button { font: inherit; }
 [data-node-id="south-crossing"] { grid-area: south; }
 [data-node-id="red-approach"] { grid-area: redapproach; }
 [data-node-id="red-king"] { grid-area: redking; border-color: #ff5757; }
-[data-legal-choice="true"] { border-color: #f4d35e; cursor: pointer; transform: translateY(-3px); box-shadow: 0 0 0 3px rgba(244, 211, 94, .18), 0 10px 30px rgba(0,0,0,.25); }
+[data-legal-choice="true"] { border-color: #f4d35e; cursor: pointer; transform: translateY(-3px); box-shadow: 0 0 0 3px rgba(244,211,94,.18), 0 10px 30px rgba(0,0,0,.25); animation: legal-choice-pulse .9s ease-in-out infinite alternate; }
+[data-current-move="true"] { border-color: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.16); }
 .qworlox-node__region { font-size: .72rem; opacity: .7; letter-spacing: .08em; }
 .qworlox-king { font-size: 1.1rem; font-weight: 900; }
 .qworlox-node__pieces { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; }
@@ -34,8 +35,17 @@ button { font: inherit; }
 .qworlox-piece--blue { background: #2463d4; }
 .qworlox-piece--red { background: #c83e48; }
 .qworlox-piece[data-selected="true"] { border-color: #f4d35e; transform: scale(1.08); box-shadow: 0 0 0 4px rgba(244,211,94,.22); }
-.qworlox-victory { margin-bottom: 1rem; padding: 1rem; border: 2px solid #f4d35e; border-radius: 1rem; text-align: center; font-size: clamp(1.3rem, 4vw, 2.4rem); font-weight: 900; animation: victory-pop .35s ease-out both; }
-@keyframes victory-pop { from { transform: scale(.96); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+[data-feedback-phase="rolled"] .qworlox-roll-state { animation: die-hit .28s ease-out both; }
+[data-feedback-phase="moving"] [data-current-move="true"] { animation: move-focus .34s ease-out both; }
+[data-feedback-phase="turn-changed"] .qworlox-turn { animation: turn-swap .42s ease-out both; }
+.qworlox-victory { margin-bottom: 1rem; padding: 1rem; border: 2px solid #f4d35e; border-radius: 1rem; text-align: center; font-size: clamp(1.3rem, 4vw, 2.4rem); font-weight: 900; animation: victory-pop .45s cubic-bezier(.2,.9,.2,1.2) both; }
+[data-feedback-phase="victory"] .qworlox-board { box-shadow: 0 0 0 3px rgba(244,211,94,.2), 0 0 60px rgba(244,211,94,.14); }
+@keyframes die-hit { 0% { transform: scale(.82) rotate(-5deg); opacity: .55; } 70% { transform: scale(1.12) rotate(2deg); } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+@keyframes legal-choice-pulse { from { box-shadow: 0 0 0 2px rgba(244,211,94,.12); } to { box-shadow: 0 0 0 5px rgba(244,211,94,.28), 0 10px 30px rgba(0,0,0,.25); } }
+@keyframes move-focus { from { transform: scale(.94); } to { transform: scale(1); } }
+@keyframes turn-swap { 0% { opacity: .35; transform: translateY(-5px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes victory-pop { from { transform: scale(.92); opacity: .25; } 70% { transform: scale(1.04); } to { transform: scale(1); opacity: 1; } }
 .qworlox-message { width: min(1240px, 96vw); margin: 0 auto 2rem; opacity: .85; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; } }
 @media (max-width: 900px) { .qworlox-arena { grid-template-columns: 1fr; } .qworlox-reserve { min-height: auto; } .qworlox-reserve > div { flex-direction: row; flex-wrap: wrap; justify-content: center; } }
 @media (max-width: 760px) { .qworlox-hud { grid-template-columns: 1fr auto; } .qworlox-roll-state { grid-column: 1 / -1; grid-row: 2; } .qworlox-board { grid-template-columns: 1fr; grid-template-areas: "blueking" "blueapproach" "north" "center" "south" "redapproach" "redking"; min-height: auto; } .qworlox-route-layer { display: none; } .qworlox-node { min-height: 110px; } }
