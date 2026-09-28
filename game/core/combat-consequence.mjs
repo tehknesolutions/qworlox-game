@@ -1,11 +1,20 @@
-export function applyCombatConsequence({ combat, positions, routeLength }) {
+import { buildMovementPath } from '../board/path.mjs';
+
+export function applyCombatConsequence({ combat, positions, pieces, routeLength }) {
   if (!Number.isInteger(routeLength) || routeLength < 1) {
     throw new TypeError('routeLength must be a positive integer');
   }
 
-  const nextPositions = { ...positions };
+  const nextPieces = pieces ? structuredClone(pieces) : null;
+  const nextPositions = positions ? { ...positions } : Object.fromEntries(
+    Object.entries(nextPieces ?? {}).map(([id, piece]) => [id, piece.position])
+  );
+
   if (combat.draw || !combat.winnerId) {
-    return { positions: nextPositions, consequence: 'IMPASSE' };
+    if (nextPieces) syncPieceNodes(nextPieces, routeLength);
+    return nextPieces
+      ? { pieces: nextPieces, positions: nextPositions, consequence: 'IMPASSE' }
+      : { positions: nextPositions, consequence: 'IMPASSE' };
   }
 
   const current = Number(nextPositions[combat.winnerId]);
@@ -13,9 +22,28 @@ export function applyCombatConsequence({ combat, positions, routeLength }) {
     throw new TypeError('winner position must be an integer');
   }
 
-  // Baseline GDD consequence: the winner gains one position.
-  // The loser remains at the contested position. The graph is the authority
-  // for later special repositioning rules.
-  nextPositions[combat.winnerId] = Math.min(current + 1, routeLength);
-  return { positions: nextPositions, consequence: 'WINNER_ADVANCES_ONE' };
+  const winner = Math.min(current + 1, routeLength);
+  nextPositions[combat.winnerId] = winner;
+
+  if (nextPieces) {
+    const piece = nextPieces[combat.winnerId];
+    if (!piece) throw new Error(`winner piece not found: ${combat.winnerId}`);
+    piece.position = winner;
+    piece.status = winner >= routeLength ? 'goal' : 'route';
+    syncPieceNodes(nextPieces, routeLength);
+  }
+
+  return nextPieces
+    ? { pieces: nextPieces, positions: nextPositions, consequence: 'WINNER_ADVANCES_ONE' }
+    : { positions: nextPositions, consequence: 'WINNER_ADVANCES_ONE' };
+}
+
+function syncPieceNodes(pieces, routeLength) {
+  for (const piece of Object.values(pieces)) {
+    if (!Number.isInteger(piece.position) || piece.position < 0 || piece.position > routeLength) {
+      throw new RangeError(`invalid piece position: ${piece.id}`);
+    }
+    const path = buildMovementPath({ routeLength, team: piece.team });
+    piece.nodeId = path[piece.position];
+  }
 }
