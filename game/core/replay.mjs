@@ -65,6 +65,10 @@ export function replayEvents(events) {
     }
   }
 
+  if (lastRoll || pendingMove) {
+    throw new Error('incomplete replay turn');
+  }
+
   return state;
 }
 
