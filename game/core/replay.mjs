@@ -35,10 +35,10 @@ export function replayEvents(events) {
         state.rolls.push({ seq: event.seq, team: event.team, roll: event.roll });
         break;
       case 'MOVE':
-        state.characters[event.characterId] = { nodeId: event.toNodeId, team: event.team };
+        applyMove(state, event);
         break;
       case 'LAND':
-        state.landings.push({ seq: event.seq, team: event.team, characterId: event.characterId, nodeId: event.nodeId });
+        applyLanding(state, event);
         break;
       case 'CARD_DRAWN':
         state.cardsDrawn.push({ seq: event.seq, cardId: event.cardId });
@@ -53,4 +53,31 @@ export function replayEvents(events) {
   }
 
   return state;
+}
+
+function applyMove(state, event) {
+  const current = state.characters[event.characterId];
+  const expectedOrigin = current?.nodeId ?? null;
+  if (event.fromNodeId !== expectedOrigin) {
+    throw new Error(`inconsistent MOVE origin for ${event.characterId}: expected ${expectedOrigin}, received ${event.fromNodeId}`);
+  }
+
+  state.characters[event.characterId] = {
+    nodeId: event.toNodeId,
+    team: event.team
+  };
+}
+
+function applyLanding(state, event) {
+  const character = state.characters[event.characterId];
+  if (!character || character.nodeId !== event.nodeId || character.team !== event.team) {
+    throw new Error(`inconsistent LAND event for ${event.characterId}`);
+  }
+
+  state.landings.push({
+    seq: event.seq,
+    team: event.team,
+    characterId: event.characterId,
+    nodeId: event.nodeId
+  });
 }
