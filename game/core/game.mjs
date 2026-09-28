@@ -6,31 +6,18 @@ import { resolveCardEffect } from '../cards/effects.mjs';
 const TEAM_ORDER = ['blue', 'red'];
 
 function makeTeam(id) {
-  return {
-    id,
-    characters: [1, 2].map(index => ({ id: `${id}-${index}`, status: 'base', position: null, nodeId: null }))
-  };
+  return { id, characters: [1, 2].map(index => ({ id: `${id}-${index}`, status: 'base', position: null, nodeId: null })) };
 }
 
 export function createGame({ routeLength }) {
   if (!Number.isInteger(routeLength) || routeLength < 4 || routeLength % 2 !== 0) throw new TypeError('routeLength must be an even integer >= 4');
-  return {
-    routeLength,
-    activeTeam: 'blue',
-    winner: null,
-    territory: createTerritoryState({ routeLength }),
-    cards: createDeckState(),
-    events: [],
-    teams: { blue: makeTeam('blue'), red: makeTeam('red') }
-  };
+  return { routeLength, activeTeam: 'blue', winner: null, territory: createTerritoryState({ routeLength }), cards: createDeckState(), events: [], teams: { blue: makeTeam('blue'), red: makeTeam('red') } };
 }
 
 export function applyRoll(game, roll) {
   assertRoll(roll);
   if (game.winner) return { legalCharacterIds: [] };
-  return {
-    legalCharacterIds: game.teams[game.activeTeam].characters.filter(character => isLegalForRoll(character, roll)).map(character => character.id)
-  };
+  return { legalCharacterIds: game.teams[game.activeTeam].characters.filter(character => isLegalForRoll(character, roll)).map(character => character.id) };
 }
 
 export function moveCharacter(game, { characterId, roll }) {
@@ -42,9 +29,7 @@ export function moveCharacter(game, { characterId, roll }) {
   const character = next.teams[next.activeTeam].characters.find(item => item.id === characterId);
   const path = buildMovementPath({ routeLength: next.routeLength, team: next.activeTeam });
   if (character.status === 'base') {
-    character.status = 'route';
-    character.position = 0;
-    character.nodeId = path[0];
+    character.status = 'route'; character.position = 0; character.nodeId = path[0];
   } else {
     character.position = Math.min(character.position + roll, next.routeLength);
     character.nodeId = path[character.position];
@@ -61,6 +46,16 @@ export function drawGameCard(game) {
   return { game: { ...game, cards: result.state }, card: result.card };
 }
 
+export function resolveTurnCardTrigger(game, trigger) {
+  if (trigger == null) return { game: structuredClone(game), card: null, events: [] };
+  if (trigger.type !== 'DRAW_CARD') throw new Error(`unknown card trigger: ${trigger.type}`);
+  const drawn = drawGameCard(game);
+  const next = structuredClone(drawn.game);
+  const event = { seq: next.events.length + 1, type: 'CARD_DRAWN', cardId: drawn.card.id };
+  next.events.push(event);
+  return { game: next, card: drawn.card, events: [event] };
+}
+
 export function playGameCard(game, { cardId, context = {} }) {
   const result = playCard(game.cards, { cardId, context });
   return { game: { ...game, cards: result.state }, card: result.card, resolution: result.resolution };
@@ -69,9 +64,7 @@ export function playGameCard(game, { cardId, context = {} }) {
 export function playResolvedGameCard(game, { cardId, context = {} }) {
   const played = playGameCard(game, { cardId, context });
   const effect = resolveCardEffect({ card: played.card, context });
-  if (effect.status !== 'RESOLVED') {
-    return { game: played.game, card: played.card, effect, events: [] };
-  }
+  if (effect.status !== 'RESOLVED') return { game: played.game, card: played.card, effect, events: [] };
   const executed = executeCardCommands(played.game, effect.commands);
   return { game: executed.game, card: played.card, effect, events: executed.events };
 }
@@ -85,15 +78,11 @@ export function executeCardCommands(game, commands) {
     if (command.type === 'SET_TERRITORY_CONTROL') {
       next.territory = setTerritoryControl(next.territory, { nodeId: command.nodeId, team: command.team });
       const event = { seq, type: 'TERRITORY_CONTROL_SET', nodeId: command.nodeId, team: command.team };
-      next.events.push(event);
-      emitted.push(event);
-      continue;
+      next.events.push(event); emitted.push(event); continue;
     }
     if (command.type === 'EMIT_GAME_EVENT') {
       const event = { seq, type: 'GAME_EVENT', event: command.event, sourceCardId: command.sourceCardId };
-      next.events.push(event);
-      emitted.push(event);
-      continue;
+      next.events.push(event); emitted.push(event); continue;
     }
     throw new Error(`unknown game command: ${command.type}`);
   }
