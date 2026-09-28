@@ -58,6 +58,12 @@ export function resolveTurn(game, graph, { characterId, roll }) {
   const victory = evaluateKingReach({ graph, team: movedTeam, characterId, nodeId: character.nodeId });
   if (victory) {
     moved = { ...moved, winner: victory.winner, victory };
+    moved = appendEvents(moved, [{
+      type: 'KING_REACHED',
+      team: victory.winner,
+      characterId: victory.characterId,
+      kingNodeId: victory.kingNodeId
+    }]);
   }
 
   const landing = resolveLanding(moved, graph, character.nodeId);
@@ -133,9 +139,7 @@ export function executeCardCommands(game, commands) {
 
 function appendEvents(game, events) {
   const next = structuredClone(game);
-  for (const event of events) {
-    next.events.push({ seq: next.events.length + 1, ...event });
-  }
+  for (const event of events) next.events.push({ seq: next.events.length + 1, ...event });
   return next;
 }
 
