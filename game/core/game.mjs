@@ -1,5 +1,6 @@
 import { buildMovementPath } from '../board/path.mjs';
 import { createTerritoryState, territoryAtNode } from '../board/territory-state.mjs';
+import { createDeckState, drawCard, playCard } from '../cards/deck.mjs';
 
 const TEAM_ORDER = ['blue', 'red'];
 
@@ -26,6 +27,7 @@ export function createGame({ routeLength }) {
     activeTeam: 'blue',
     winner: null,
     territory,
+    cards: createDeckState(),
     teams: {
       blue: makeTeam('blue'),
       red: makeTeam('red')
@@ -76,6 +78,20 @@ export function moveCharacter(game, { characterId, roll }) {
 
   next.activeTeam = next.activeTeam === TEAM_ORDER[0] ? TEAM_ORDER[1] : TEAM_ORDER[0];
   return next;
+}
+
+export function drawGameCard(game) {
+  const result = drawCard(game.cards);
+  return { game: { ...game, cards: result.state }, card: result.card };
+}
+
+export function playGameCard(game, { cardId, context = {} }) {
+  const result = playCard(game.cards, { cardId, context });
+  return {
+    game: { ...game, cards: result.state },
+    card: result.card,
+    resolution: result.resolution
+  };
 }
 
 function isLegalForRoll(character, roll) {
