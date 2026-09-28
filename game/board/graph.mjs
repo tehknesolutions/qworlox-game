@@ -1,16 +1,28 @@
 const BOARD_TRIGGER_TYPES = new Set(['DRAW_CARD']);
+const BOARD_OBJECTIVE_TYPES = new Set(['KING']);
+const KING_TEAMS = ['blue', 'red'];
 
 export function buildBoardGraph(board) {
   const nodes = new Map();
   const forwardEdges = [];
   const lateralEdges = [];
   const adjacency = new Map();
+  const kingObjectives = {};
 
   for (const lane of board.lanes) {
     for (const node of lane.nodes) {
       if (nodes.has(node.id)) throw new Error(`duplicate board node: ${node.id}`);
       const trigger = normalizeBoardTrigger(node.trigger);
-      nodes.set(node.id, { ...node, trigger, laneId: lane.id });
+      const objective = normalizeBoardObjective(node.objective);
+
+      if (objective?.type === 'KING') {
+        if (kingObjectives[objective.team]) {
+          throw new Error(`duplicate KING objective for ${objective.team}`);
+        }
+        kingObjectives[objective.team] = node.id;
+      }
+
+      nodes.set(node.id, { ...node, trigger, objective, laneId: lane.id });
       adjacency.set(node.id, []);
     }
 
@@ -23,6 +35,10 @@ export function buildBoardGraph(board) {
     }
   }
 
+  for (const team of KING_TEAMS) {
+    if (!kingObjectives[team]) throw new Error(`missing KING objective for ${team}`);
+  }
+
   for (const edge of board.lateralEdges ?? []) {
     if (!nodes.has(edge.from) || !nodes.has(edge.to)) {
       throw new Error(`lateral edge references unknown node: ${edge.from} -> ${edge.to}`);
@@ -32,7 +48,7 @@ export function buildBoardGraph(board) {
     if (edge.bidirectional !== false) adjacency.get(edge.to).push(edge.from);
   }
 
-  return { nodes, forwardEdges, lateralEdges, adjacency };
+  return { nodes, forwardEdges, lateralEdges, adjacency, kingObjectives };
 }
 
 function normalizeBoardTrigger(trigger) {
@@ -41,6 +57,17 @@ function normalizeBoardTrigger(trigger) {
     throw new Error(`unknown board trigger: ${trigger.type ?? 'missing'}`);
   }
   return { ...trigger };
+}
+
+function normalizeBoardObjective(objective) {
+  if (objective == null) return null;
+  if (!objective.type || !BOARD_OBJECTIVE_TYPES.has(objective.type)) {
+    throw new Error(`unknown board objective: ${objective.type ?? 'missing'}`);
+  }
+  if (!KING_TEAMS.includes(objective.team)) {
+    throw new Error(`invalid KING objective team: ${objective.team ?? 'missing'}`);
+  }
+  return { ...objective };
 }
 
 export function shortestPathLength(graph, start, goal) {
