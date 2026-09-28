@@ -21,6 +21,7 @@ export function replayEvents(events) {
 
   let lastRoll = null;
   let pendingMove = null;
+  let landingOpen = false;
 
   for (let index = 0; index < events.length; index += 1) {
     const event = events[index];
@@ -43,13 +44,17 @@ export function replayEvents(events) {
         applyMove(state, event, lastRoll);
         lastRoll = null;
         pendingMove = event;
+        landingOpen = false;
         break;
       case 'LAND':
         applyLanding(state, event, pendingMove);
         pendingMove = null;
+        landingOpen = true;
         break;
       case 'CARD_DRAWN':
+        if (!landingOpen) throw new Error('CARD_DRAWN before LAND');
         state.cardsDrawn.push({ seq: event.seq, cardId: event.cardId });
+        landingOpen = false;
         break;
       case 'TERRITORY_CONTROL_SET':
         state.territoryControl[event.nodeId] = event.team;
