@@ -41,6 +41,12 @@ export function moveCharacter(game, { characterId, roll }) {
   return next;
 }
 
+export function resolveLandingTrigger(graph, nodeId) {
+  const node = graph?.nodes?.get(nodeId);
+  if (!node) throw new Error(`unknown landing node: ${nodeId}`);
+  return node.trigger ?? null;
+}
+
 export function drawGameCard(game) {
   const result = drawCard(game.cards);
   return { game: { ...game, cards: result.state }, card: result.card };
