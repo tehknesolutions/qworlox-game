@@ -39,6 +39,7 @@ export function replayEvents(events) {
         break;
       case 'MOVE':
         applyMove(state, event, lastRoll);
+        lastRoll = null;
         break;
       case 'LAND':
         applyLanding(state, event);
