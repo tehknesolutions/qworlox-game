@@ -19,6 +19,8 @@ export function replayEvents(events) {
     gameEvents: []
   };
 
+  let lastRoll = null;
+
   for (let index = 0; index < events.length; index += 1) {
     const event = events[index];
     const expectedSeq = index + 1;
@@ -33,9 +35,10 @@ export function replayEvents(events) {
     switch (event.type) {
       case 'ROLL':
         state.rolls.push({ seq: event.seq, team: event.team, roll: event.roll });
+        lastRoll = event;
         break;
       case 'MOVE':
-        applyMove(state, event);
+        applyMove(state, event, lastRoll);
         break;
       case 'LAND':
         applyLanding(state, event);
@@ -55,7 +58,11 @@ export function replayEvents(events) {
   return state;
 }
 
-function applyMove(state, event) {
+function applyMove(state, event, lastRoll) {
+  if (!lastRoll || lastRoll.team !== event.team) {
+    throw new Error(`MOVE without preceding ROLL for ${event.characterId}`);
+  }
+
   const current = state.characters[event.characterId];
   const expectedOrigin = current?.nodeId ?? null;
   if (event.fromNodeId !== expectedOrigin) {
