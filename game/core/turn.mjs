@@ -29,19 +29,9 @@ export function resolveTurnWithEncounter(game, { characterId, roll, combat } = {
   const occupants = Object.values(next.teams)
     .flatMap(side => side.characters)
     .filter(item => item.id !== character.id && item.status !== 'base' && item.nodeId)
-    .map(item => ({
-      id: item.id,
-      team: sideFor(next, item.id),
-      nodeId: item.nodeId,
-      attributes: item.attributes ?? {}
-    }));
+    .map(item => ({ id: item.id, team: sideFor(next, item.id), nodeId: item.nodeId, attributes: item.attributes ?? {} }));
 
-  const mover = {
-    id: character.id,
-    team,
-    nodeId: character.nodeId,
-    attributes: character.attributes ?? {}
-  };
+  const mover = { id: character.id, team, nodeId: character.nodeId, attributes: character.attributes ?? {} };
   const encounter = detectEncounter({ mover, occupants });
 
   let combatResult = null;
@@ -50,33 +40,23 @@ export function resolveTurnWithEncounter(game, { characterId, roll, combat } = {
     const defender = findCharacter(next, encounter.defenderId);
     combatResult = resolveEncounterCombat({
       attacker: mover,
-      defender: {
-        ...defender,
-        team: sideFor(next, defender.id),
-        nodeId: defender.nodeId,
-        attributes: defender.attributes ?? {}
-      },
+      defender: { ...defender, team: sideFor(next, defender.id), nodeId: defender.nodeId, attributes: defender.attributes ?? {} },
       ...combat
     }).combat;
 
-    const positions = Object.fromEntries(
-      Object.values(next.teams).flatMap(side => side.characters.map(item => [item.id, item.position]))
+    const pieces = Object.fromEntries(
+      Object.values(next.teams).flatMap(side => side.characters.map(item => [item.id, item]))
     );
-    const consequence = applyCombatConsequence({ combat: combatResult, positions, routeLength: next.routeLength });
-    for (const [id, position] of Object.entries(consequence.positions)) {
+    const consequence = applyCombatConsequence({ combat: combatResult, pieces, routeLength: next.routeLength });
+    for (const [id, state] of Object.entries(consequence.pieces)) {
       const piece = findCharacter(next, id);
-      if (piece) {
-        piece.position = position;
-        const pieceTeam = sideFor(next, id);
-        piece.nodeId = buildMovementPath({ routeLength: next.routeLength, team: pieceTeam })[position];
-      }
+      piece.position = state.position;
+      piece.status = state.status;
+      piece.nodeId = state.nodeId;
     }
   }
 
-  if (next.teams[team].characters.every(item => item.status === 'goal')) {
-    next.winner = team;
-  }
-
+  if (next.teams[team].characters.every(item => item.status === 'goal')) next.winner = team;
   next.activeTeam = team === 'blue' ? 'red' : 'blue';
   return { game: next, encounter, combat: combatResult };
 }
