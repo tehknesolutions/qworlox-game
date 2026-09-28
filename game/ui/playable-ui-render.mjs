@@ -23,11 +23,19 @@ export function renderPlayableHTML(ui) {
   const steps = ui.remainingSteps > 0 ? `<span class="qworlox-steps">Steps: ${escapeHTML(ui.remainingSteps)}</span>` : '';
   const announcement = ui.announcement ? `<div class="qworlox-victory" role="status">${escapeHTML(ui.announcement)}</div>` : '';
   const phase = escapeHTML(ui.feedbackPhase ?? 'idle');
+  const instruction = contextualInstruction(ui);
+  const guide = `<section class="qworlox-playtest-guide" data-playtest-guide aria-live="polite"><div><strong>HOW TO WIN</strong><span>Reach the enemy King before they reach yours.</span></div><div><strong>WHAT TO DO NOW</strong><span>${escapeHTML(instruction)}</span></div><small>Select → Roll D6 → follow highlighted nodes → reach enemy King.</small></section>`;
   const logEntries = (ui.matchLog ?? []).map(entry => `<li>${escapeHTML(entry)}</li>`).join('');
   const matchLog = `<aside class="qworlox-match-log" data-match-log aria-label="Match log"><strong>MATCH LOG</strong><ol>${logEntries}</ol></aside>`;
 
-  return `<main class="qworlox-shell" data-interaction-locked="${ui.interactionLocked ? 'true' : 'false'}" data-feedback-phase="${phase}"><header class="qworlox-hud"><strong class="qworlox-turn">Turn: ${escapeHTML(String(ui.activeTeam).toUpperCase())}</strong><div class="qworlox-roll-state"><span>${die}</span>${steps}</div><button type="button" data-action="roll"${ui.interactionLocked ? ' disabled' : ''}>ROLL D6</button></header>${announcement}<div class="qworlox-arena">${reserve('blue')}<section class="qworlox-board" data-qworlox-board aria-label="Q'Worlox King Reach board"><div class="qworlox-route-layer" data-route-layer aria-hidden="true"></div>${nodes}</section>${reserve('red')}</div>${matchLog}</main>`;
+  return `<main class="qworlox-shell" data-interaction-locked="${ui.interactionLocked ? 'true' : 'false'}" data-feedback-phase="${phase}">${guide}<header class="qworlox-hud"><strong class="qworlox-turn">Turn: ${escapeHTML(String(ui.activeTeam).toUpperCase())}</strong><div class="qworlox-roll-state"><span>${die}</span>${steps}</div><button type="button" data-action="roll"${ui.interactionLocked ? ' disabled' : ''}>ROLL D6</button></header>${announcement}<div class="qworlox-arena">${reserve('blue')}<section class="qworlox-board" data-qworlox-board aria-label="Q'Worlox King Reach board"><div class="qworlox-route-layer" data-route-layer aria-hidden="true"></div>${nodes}</section>${reserve('red')}</div>${matchLog}</main>`;
 }
 
+function contextualInstruction(ui) {
+  if (ui.winner || ui.feedbackPhase === 'victory') return `KING REACHED — ${String(ui.winner ?? '').toUpperCase()} WINS`;
+  if ((ui.remainingSteps ?? 0) > 0 || (ui.legalNextNodes?.length ?? 0) > 0) return 'Choose a highlighted route.';
+  if (ui.selectedCharacterId) return 'Roll the D6.';
+  return `Select a ${String(ui.activeTeam).toUpperCase()} character.`;
+}
 function label(value) { return String(value).replaceAll('_', ' '); }
 function escapeHTML(value) { return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;'); }
