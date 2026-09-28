@@ -1,0 +1,6 @@
+{
+"schemaVersion":"board.v1","id":"candidate-c-18","routeLength":18,"teams":["blue","red"],"startSlotsPerTeam":2,"releaseRoll":6,
+"lanes":[
+{"id":"blue","nodes":[{"id":"b01"},{"id":"b02"},{"id":"b03"},{"id":"b04"},{"id":"b05"},{"id":"b06"},{"id":"b07"},{"id":"b08"},{"id":"b09"},{"id":"b10"},{"id":"b11"},{"id":"b12"},{"id":"b13"},{"id":"b14"},{"id":"b15"},{"id":"b16"},{"id":"b17"},{"id":"b18"}]},
+{"id":"red","nodes":[{"id":"r01"},{"id":"r02"},{"id":"r03"},{"id":"r04"},{"id":"r05"},{"id":"r06"},{"id":"r07"},{"id":"r08"},{"id":"r09"},{"id":"r10"},{"id":"r11"},{"id":"r12"},{"id":"r13"},{"id":"r14"},{"id":"r15"},{"id":"r16"},{"id":"r17"},{"id":"r18"}]}
+]}
