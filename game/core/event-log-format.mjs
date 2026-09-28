@@ -2,6 +2,7 @@ import { replayEvents } from './replay.mjs';
 
 const FORMAT = 'qworlox-event-log';
 const VERSION = 1;
+const DOCUMENT_FIELDS = new Set(['format', 'version', 'events']);
 
 export function serializeEventLog(events) {
   if (!Array.isArray(events)) throw new TypeError('events must be an array');
@@ -27,6 +28,7 @@ export function importEventLog(serialized) {
   if (!document || typeof document !== 'object' || Array.isArray(document)) {
     throw new Error('invalid event log document');
   }
+  assertDocumentFields(document);
   if (document.format !== FORMAT) {
     throw new Error(`unsupported event log format: ${document.format ?? 'missing'}`);
   }
@@ -51,6 +53,14 @@ export function importReplayableEventLog(serialized) {
   const document = importEventLog(serialized);
   const state = replayEvents(document.events);
   return { document, state };
+}
+
+function assertDocumentFields(document) {
+  for (const field of Object.keys(document)) {
+    if (!DOCUMENT_FIELDS.has(field)) {
+      throw new Error(`unknown event log document field: ${field}`);
+    }
+  }
 }
 
 function assertEventEntries(events) {
