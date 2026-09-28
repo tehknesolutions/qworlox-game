@@ -47,6 +47,12 @@ export function resolveLandingTrigger(graph, nodeId) {
   return node.trigger ?? null;
 }
 
+export function resolveLanding(game, graph, nodeId) {
+  const trigger = resolveLandingTrigger(graph, nodeId);
+  const resolved = resolveTurnCardTrigger(game, trigger);
+  return { ...resolved, trigger };
+}
+
 export function drawGameCard(game) {
   const result = drawCard(game.cards);
   return { game: { ...game, cards: result.state }, card: result.card };
