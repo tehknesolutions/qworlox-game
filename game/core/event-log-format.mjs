@@ -1,3 +1,5 @@
+import { replayEvents } from './replay.mjs';
+
 const FORMAT = 'qworlox-event-log';
 const VERSION = 1;
 
@@ -38,4 +40,10 @@ export function importEventLog(serialized) {
     version: VERSION,
     events: structuredClone(document.events)
   };
+}
+
+export function importReplayableEventLog(serialized) {
+  const document = importEventLog(serialized);
+  const state = replayEvents(document.events);
+  return { document, state };
 }
