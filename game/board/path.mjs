@@ -4,14 +4,13 @@ export function buildMovementPath({ routeLength, team }) {
 
   const half = routeLength / 2;
   const path = [`${team}-entry`];
-  for (let index = 1; index <= half; index += 1) path.push(`${team}-${index}`);
+  for (let index = 1; index < half; index += 1) path.push(`${team}-${index}`);
   path.push('center');
 
   const opponent = team === 'blue' ? 'red' : 'blue';
-  for (let index = half; index >= 1; index -= 1) path.push(`${opponent}-${index}`);
+  for (let index = half - 1; index >= 1; index -= 1) path.push(`${opponent}-${index}`);
   path.push(`${opponent}-goal`);
 
-  // The shared center is counted once; routeLength represents movement steps.
   if (path.length !== routeLength + 1) {
     throw new Error(`movement path length mismatch for ${team}/${routeLength}`);
   }
