@@ -6,19 +6,23 @@ export function createBrowserController({ random = Math.random } = {}) {
   let match = createPlayableMatch();
   let selectedCharacterId = null;
   let pendingRoll = null;
+  let lastRoll = null;
   let pendingChoices = [];
   let pendingNodeId = null;
 
   function view() {
     const ui = projectPlayableUI(match, { selectedCharacterId });
+    const remainingSteps = pendingRoll === null ? 0 : pendingRoll - pendingChoices.length;
+    ui.lastRoll = lastRoll;
+    ui.remainingSteps = remainingSteps;
     if (pendingRoll !== null && pendingNodeId) {
       ui.legalNextNodes = [...new Set(match.graph.adjacency.get(pendingNodeId) ?? [])];
     }
     return {
       ui,
       html: renderPlayableHTML(ui),
-      roll: pendingRoll,
-      pendingSteps: pendingRoll === null ? 0 : pendingRoll - pendingChoices.length
+      roll: pendingRoll ?? lastRoll,
+      pendingSteps: remainingSteps
     };
   }
 
@@ -37,13 +41,14 @@ export function createBrowserController({ random = Math.random } = {}) {
     if (pendingRoll !== null) throw new Error('roll already pending');
 
     const value = Math.floor(normalizeRandom(random()) * 6) + 1;
+    lastRoll = value;
     const team = match.game.activeTeam;
     const character = match.game.teams[team].characters.find(item => item.id === selectedCharacterId);
 
     if (character.status === 'base') {
       match = playTurn(match, { characterId: selectedCharacterId, roll: value });
       selectedCharacterId = null;
-      return { ...view(), roll: value };
+      return view();
     }
 
     pendingRoll = value;
@@ -65,10 +70,9 @@ export function createBrowserController({ random = Math.random } = {}) {
 
     if (pendingChoices.length < pendingRoll) return view();
 
-    const completedRoll = pendingRoll;
     match = playTurn(match, {
       characterId: selectedCharacterId,
-      roll: completedRoll,
+      roll: pendingRoll,
       choices: [...pendingChoices]
     });
     selectedCharacterId = null;
