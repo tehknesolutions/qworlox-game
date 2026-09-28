@@ -2,6 +2,7 @@ import { buildMovementPath } from '../board/path.mjs';
 import { createTerritoryState, territoryAtNode, setTerritoryControl } from '../board/territory-state.mjs';
 import { createDeckState, drawCard, playCard } from '../cards/deck.mjs';
 import { resolveCardEffect } from '../cards/effects.mjs';
+import { evaluateKingReach } from './victory.mjs';
 
 const TEAM_ORDER = ['blue', 'red'];
 
@@ -11,7 +12,7 @@ function makeTeam(id) {
 
 export function createGame({ routeLength }) {
   if (!Number.isInteger(routeLength) || routeLength < 4 || routeLength % 2 !== 0) throw new TypeError('routeLength must be an even integer >= 4');
-  return { routeLength, activeTeam: 'blue', winner: null, territory: createTerritoryState({ routeLength }), cards: createDeckState(), events: [], teams: { blue: makeTeam('blue'), red: makeTeam('red') } };
+  return { routeLength, activeTeam: 'blue', winner: null, victory: null, territory: createTerritoryState({ routeLength }), cards: createDeckState(), events: [], teams: { blue: makeTeam('blue'), red: makeTeam('red') } };
 }
 
 export function applyRoll(game, roll) {
@@ -36,12 +37,12 @@ export function moveCharacter(game, { characterId, roll }) {
     if (character.position >= next.routeLength) character.status = 'goal';
   }
   character.territory = territoryAtNode(next.territory, character.nodeId);
-  if (next.teams[next.activeTeam].characters.every(item => item.status === 'goal')) next.winner = next.activeTeam;
   next.activeTeam = next.activeTeam === TEAM_ORDER[0] ? TEAM_ORDER[1] : TEAM_ORDER[0];
   return next;
 }
 
 export function resolveTurn(game, graph, { characterId, roll }) {
+  if (game.winner) throw new Error('game is already complete');
   const movedTeam = game.activeTeam;
   const beforeCharacter = game.teams[movedTeam].characters.find(item => item.id === characterId);
   const fromNodeId = beforeCharacter?.nodeId ?? null;
@@ -53,6 +54,17 @@ export function resolveTurn(game, graph, { characterId, roll }) {
     { type: 'MOVE', team: movedTeam, characterId, fromNodeId, toNodeId: character.nodeId },
     { type: 'LAND', team: movedTeam, characterId, nodeId: character.nodeId }
   ]);
+
+  const victory = evaluateKingReach({ graph, team: movedTeam, characterId, nodeId: character.nodeId });
+  if (victory) {
+    moved = { ...moved, winner: victory.winner, victory };
+    moved = appendEvents(moved, [{
+      type: 'KING_REACHED',
+      team: victory.winner,
+      characterId: victory.characterId,
+      kingNodeId: victory.kingNodeId
+    }]);
+  }
 
   const landing = resolveLanding(moved, graph, character.nodeId);
   return {
@@ -127,9 +139,7 @@ export function executeCardCommands(game, commands) {
 
 function appendEvents(game, events) {
   const next = structuredClone(game);
-  for (const event of events) {
-    next.events.push({ seq: next.events.length + 1, ...event });
-  }
+  for (const event of events) next.events.push({ seq: next.events.length + 1, ...event });
   return next;
 }
 
