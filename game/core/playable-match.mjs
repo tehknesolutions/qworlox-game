@@ -1,69 +1,80 @@
 import { buildBoardGraph } from '../board/graph.mjs';
-import { createGame, resolveTurn } from './game.mjs';
+import { advanceOnGraph } from '../board/graph-movement.mjs';
+import { createGame } from './game.mjs';
+import { evaluateKingReach } from './victory.mjs';
 import { KING_REACH_PLAYABLE_BOARD_V1 } from '../boards/king-reach-playable.v1.mjs';
-
-const PATHS = {
-  blue: ['blue-king', 'blue-approach', 'center', 'red-approach', 'red-king'],
-  red: ['red-king', 'red-approach', 'center', 'blue-approach', 'blue-king']
-};
 
 export function createPlayableMatch() {
   const graph = buildBoardGraph(KING_REACH_PLAYABLE_BOARD_V1);
-  const paths = structuredClone(PATHS);
-  const game = createGame({ routeLength: paths.blue.length - 1 });
-
-  return { game, graph, paths };
+  const game = createGame({ routeLength: 4 });
+  return { game, graph };
 }
 
-export function playTurn(match, action) {
-  if (!match || !match.game || !match.graph || !match.paths) {
-    throw new TypeError('invalid playable match');
-  }
+export function playTurn(match, { characterId, roll, choices = [] }) {
+  assertMatch(match);
+  assertRoll(roll);
   if (match.game.winner) throw new Error('game is already complete');
 
   const movedTeam = match.game.activeTeam;
-  const path = match.paths[movedTeam];
   const game = structuredClone(match.game);
-  const character = game.teams[movedTeam].characters.find(item => item.id === action.characterId);
+  const character = game.teams[movedTeam].characters.find(item => item.id === characterId);
+  if (!character) throw new Error(`unknown character: ${characterId}`);
+  if (character.status === 'base') throw new Error(`${characterId} must be placed on the board before graph movement`);
+  if (!character.nodeId) throw new Error(`${characterId} has no graph node`);
 
-  if (!character) throw new Error(`unknown character: ${action.characterId}`);
+  const fromNodeId = character.nodeId;
+  const movement = advanceOnGraph(match.graph, { startNodeId: fromNodeId, steps: roll, choices });
+  character.nodeId = movement.nodeId;
+  character.position = null;
 
-  // The current Game Core uses its canonical movement path. For the playable
-  // facade, map route positions onto the explicit board fixture before and
-  // after resolution so the board graph remains the presentation/domain map.
-  if (character.status === 'route' && Number.isInteger(character.position)) {
-    character.nodeId = path[character.position];
+  game.events.push({ seq: game.events.length + 1, type: 'ROLL', team: movedTeam, roll });
+  game.events.push({
+    seq: game.events.length + 1,
+    type: 'MOVE',
+    team: movedTeam,
+    characterId,
+    fromNodeId,
+    toNodeId: character.nodeId
+  });
+  game.events.push({
+    seq: game.events.length + 1,
+    type: 'LAND',
+    team: movedTeam,
+    characterId,
+    nodeId: character.nodeId
+  });
+
+  const victory = evaluateKingReach({
+    graph: match.graph,
+    team: movedTeam,
+    characterId,
+    nodeId: character.nodeId
+  });
+
+  if (victory) {
+    game.winner = victory.winner;
+    game.victory = victory;
+    character.status = 'goal';
+    game.events.push({
+      seq: game.events.length + 1,
+      type: 'KING_REACHED',
+      team: victory.winner,
+      characterId: victory.characterId,
+      kingNodeId: victory.kingNodeId
+    });
+  } else {
+    game.activeTeam = movedTeam === 'blue' ? 'red' : 'blue';
   }
 
-  const result = resolveTurn(game, match.graph, action);
-  const movedCharacter = result.game.teams[movedTeam].characters.find(item => item.id === action.characterId);
+  return { ...match, game };
+}
 
-  if (movedCharacter?.status === 'route' || movedCharacter?.status === 'goal') {
-    const boardNodeId = path[Math.min(movedCharacter.position, path.length - 1)];
-    movedCharacter.nodeId = boardNodeId;
+function assertMatch(match) {
+  if (!match?.game || !match?.graph) throw new TypeError('invalid playable match');
+}
 
-    // resolveTurn evaluated against the legacy route node. Re-evaluate only
-    // the terminal board mapping here until movement itself becomes graph-native.
-    if (!result.game.winner && boardNodeId === match.graph.kingObjectives[movedTeam === 'blue' ? 'red' : 'blue']) {
-      result.game.winner = movedTeam;
-      result.game.victory = {
-        winner: movedTeam,
-        characterId: action.characterId,
-        kingNodeId: boardNodeId
-      };
-      const land = result.game.events.findLast(event => event.type === 'LAND' && event.characterId === action.characterId);
-      if (land) land.nodeId = boardNodeId;
-      const move = result.game.events.findLast(event => event.type === 'MOVE' && event.characterId === action.characterId);
-      if (move) move.toNodeId = boardNodeId;
-      result.game.events.push({
-        seq: result.game.events.length + 1,
-        type: 'KING_REACHED',
-        team: movedTeam,
-        characterId: action.characterId,
-        kingNodeId: boardNodeId
-      });
-    }
+function assertRoll(roll) {
+  if (!Number.isInteger(roll) || roll < 1 || roll > 6) {
+    throw new RangeError('roll must be an integer from 1 to 6');
   }
-
-  return { ...match, game: result.game };
 }
