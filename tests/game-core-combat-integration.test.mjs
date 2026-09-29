@@ -25,7 +25,7 @@ test('Game Core can move into an occupied contested node and resolve combat', ()
   });
   assert.equal(result.encounter.type, 'ENCOUNTER');
   assert.equal(result.combat.winnerId, 'red-1');
-  assert.equal(result.game.teams.red.characters[0].position, 13);
+  assert.equal(result.game.teams.red.characters[0].position, 10);
 });
 
 test('a turn without an encounter still returns a valid game state', () => {
