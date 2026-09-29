@@ -9,7 +9,7 @@ function rigPiece(controller, team, id, nodeId) {
 }
 
 test('a deterministic Blue vs Red match can reach the enemy King and lock forever', () => {
-  const rolls = [0.99, 0.99, 0.2, 0.0, 0.0]; // 6, 6, 2, 1, 1
+  const rolls = [0.99, 0.99, 0.2, 0.2, 0.0]; // 6, 6, 2, 2, 1
   const controller = createBrowserController({ random: () => rolls.shift() ?? 0 });
 
   controller.selectCharacter('blue-1');
@@ -32,6 +32,7 @@ test('a deterministic Blue vs Red match can reach the enemy King and lock foreve
   rigPiece(controller, 'red', 'red-1', 'red-approach');
   controller.selectCharacter('red-1');
   controller.roll();
+  controller.chooseNode('south-crossing');
   state = controller.chooseNode('center');
   assert.equal(state.ui.activeTeam, 'blue');
 
