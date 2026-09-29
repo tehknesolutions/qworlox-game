@@ -38,10 +38,10 @@ test('a team wins only after both characters reach goal', () => {
   let game = createGame({ routeLength: 2 });
   game = moveCharacter(game, { characterId: 'blue-1', roll: 6 });
   game = moveCharacter(game, { characterId: 'red-1', roll: 6 });
-  game = moveCharacter(game, { characterId: 'blue-1', roll: 2 });
+  game = moveCharacter(game, { characterId: 'blue-1', roll: 4 });
   game = moveCharacter(game, { characterId: 'red-1', roll: 1 });
   game = moveCharacter(game, { characterId: 'blue-2', roll: 6 });
-  game = moveCharacter(game, { characterId: 'red-1', roll: 1 });
-  game = moveCharacter(game, { characterId: 'blue-2', roll: 2 });
+  game = moveCharacter(game, { characterId: 'red-1', roll: 3 });
+  game = moveCharacter(game, { characterId: 'blue-2', roll: 4 });
   assert.equal(game.winner, 'blue');
 });
