@@ -47,7 +47,8 @@ test('rendered HUD shows die result and remaining movement when present', () => 
   ui.remainingSteps = 2;
   const html = renderPlayableHTML(ui);
 
-  assert.match(html, /D6: 4/);
+  assert.match(html, /data-die-result="4"/);
+  assert.match(html, /<strong>4<\/strong>/);
   assert.match(html, /Steps: 2/);
 });
 
