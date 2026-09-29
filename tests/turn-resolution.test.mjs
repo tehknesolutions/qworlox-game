@@ -20,14 +20,16 @@ test('turn resolution moves, resolves landing, then hands control to opponent', 
   assert.equal(result.card.id, 'qworlox-combat-001');
   assert.equal(result.game.cards.hand.length, 1);
   assert.equal(result.game.activeTeam, 'red');
+  assert.deepEqual(result.game.events.map(event => event.type), ['ROLL', 'MOVE', 'LAND', 'CARD_DRAWN']);
+  assert.deepEqual(result.game.events.map(event => event.seq), [1, 2, 3, 4]);
   assert.deepEqual(result.game.events.at(-1), {
-    seq: 1,
+    seq: 4,
     type: 'CARD_DRAWN',
     cardId: 'qworlox-combat-001'
   });
 });
 
-test('turn resolution on ordinary landing changes player without hidden card action', () => {
+test('turn resolution on ordinary landing changes player and records causal movement only', () => {
   const game = createGame({ routeLength: 18 });
   const graph = graphFor([{ id: 'blue-entry', trigger: null }]);
 
@@ -38,5 +40,6 @@ test('turn resolution on ordinary landing changes player without hidden card act
   assert.equal(result.card, null);
   assert.equal(result.game.cards.hand.length, 0);
   assert.equal(result.game.activeTeam, 'red');
-  assert.deepEqual(result.game.events, []);
+  assert.deepEqual(result.game.events.map(event => event.type), ['ROLL', 'MOVE', 'LAND']);
+  assert.deepEqual(result.game.events.map(event => event.seq), [1, 2, 3]);
 });
