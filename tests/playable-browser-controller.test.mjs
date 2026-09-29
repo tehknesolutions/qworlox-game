@@ -2,12 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createBrowserController } from '../game/ui/playable-browser-controller.mjs';
 
-test('controller starts from canonical playable match and renders BLUE turn', () => {
+test('controller starts from canonical playable match and renders BLUE active player', () => {
   const controller = createBrowserController({ random: () => 0.99 });
   const view = controller.view();
 
   assert.equal(view.ui.activeTeam, 'blue');
-  assert.match(view.html, /Turn: BLUE/);
+  assert.match(view.html, /data-active-team="blue"/);
+  assert.match(view.html, /data-turn-status>BLUE/);
 });
 
 test('selecting an active-team piece is reflected in UI projection', () => {
@@ -17,7 +18,7 @@ test('selecting an active-team piece is reflected in UI projection', () => {
   assert.equal(controller.view().ui.selectedCharacterId, 'blue-1');
 });
 
-test('rolling a six releases selected base piece and rerenders RED turn', () => {
+test('rolling a six releases selected base piece and rerenders RED active player', () => {
   const controller = createBrowserController({ random: () => 0.99 });
   controller.selectCharacter('blue-1');
   const result = controller.roll();
@@ -25,7 +26,8 @@ test('rolling a six releases selected base piece and rerenders RED turn', () => 
   assert.equal(result.roll, 6);
   assert.equal(result.ui.pieces.find(piece => piece.id === 'blue-1').nodeId, 'blue-king');
   assert.equal(result.ui.activeTeam, 'red');
-  assert.match(result.html, /Turn: RED/);
+  assert.match(result.html, /data-active-team="red"/);
+  assert.match(result.html, /data-turn-status>RED/);
 });
 
 test('controller rejects selecting opponent piece', () => {
