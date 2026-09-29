@@ -45,3 +45,21 @@ test('piece-mode consequence preserves team identity while synchronizing canonic
   assert.equal(result.pieces['blue-1'].nodeId, 'red-8');
   assert.equal(result.pieces['red-1'].nodeId, 'center');
 });
+
+test('base pieces remain off-board during consequence synchronization', () => {
+  const result = applyCombatConsequence({
+    combat: { winnerId: 'blue-1', loserId: 'red-1', draw: false },
+    pieces: {
+      'blue-1': { id: 'blue-1', team: 'blue', position: 9, status: 'route', nodeId: 'center' },
+      'blue-2': { id: 'blue-2', team: 'blue', position: null, status: 'base', nodeId: null },
+      'red-1': { id: 'red-1', team: 'red', position: 9, status: 'route', nodeId: 'center' },
+      'red-2': { id: 'red-2', team: 'red', position: null, status: 'base', nodeId: null }
+    },
+    routeLength: 18
+  });
+
+  assert.equal(result.pieces['blue-2'].position, null);
+  assert.equal(result.pieces['blue-2'].nodeId, null);
+  assert.equal(result.pieces['red-2'].position, null);
+  assert.equal(result.pieces['red-2'].nodeId, null);
+});
