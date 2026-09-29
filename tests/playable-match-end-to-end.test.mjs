@@ -21,8 +21,8 @@ test('complete match runs from all characters in base to King Reach without stat
 
   match = turn(match, {
     characterId: 'blue-1',
-    roll: 4,
-    choices: ['blue-approach', 'north-crossing', 'center', 'red-approach']
+    roll: 5,
+    choices: ['blue-approach', 'north-crossing', 'center', 'south-crossing', 'red-approach']
   });
   assert.equal(match.game.teams.blue.characters[0].nodeId, 'red-approach');
 
@@ -52,7 +52,7 @@ test('zero-state complete match is deterministic through serialize/import/replay
   let match = createPlayableMatch();
   match = turn(match, { characterId: 'blue-1', roll: 6 });
   match = turn(match, { characterId: 'red-1', roll: 6 });
-  match = turn(match, { characterId: 'blue-1', roll: 4, choices: ['blue-approach', 'south-crossing', 'center', 'red-approach'] });
+  match = turn(match, { characterId: 'blue-1', roll: 5, choices: ['blue-approach', 'south-crossing', 'center', 'north-crossing', 'red-approach'] });
   match = turn(match, { characterId: 'red-1', roll: 1, choices: ['red-approach'] });
   match = turn(match, { characterId: 'blue-1', roll: 1, choices: ['red-king'] });
 

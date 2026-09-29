@@ -32,7 +32,8 @@ export function playTurn(match, { characterId, roll, choices = [] }) {
     const movement = advanceOnGraph(match.graph, {
       startNodeId: character.nodeId,
       steps: roll,
-      choices
+      choices,
+      movingTeam: movedTeam
     });
     character.nodeId = movement.nodeId;
     character.position = null;
