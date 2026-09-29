@@ -12,6 +12,20 @@ test('rendered UI contains board, turn panel and roll control', () => {
   assert.match(html, /data-action="roll"/);
 });
 
+test('player-facing HUD exposes active player, action state and die result hooks', () => {
+  const ui = projectPlayableUI(createPlayableMatch(), { selectedCharacterId: 'blue-1' });
+  ui.lastRoll = 6;
+  ui.feedbackPhase = 'selected';
+  const html = renderPlayableHTML(ui);
+
+  assert.match(html, /data-player-hud/);
+  assert.match(html, /data-active-team="blue"/);
+  assert.match(html, /data-turn-status/);
+  assert.match(html, /data-die-result="6"/);
+  assert.match(html, /data-selected-piece="blue-1"/);
+  assert.match(html, /data-action-state="selected"/);
+});
+
 test('rendered board exposes both Kings and contested center', () => {
   const html = renderPlayableHTML(projectPlayableUI(createPlayableMatch()));
 
@@ -33,12 +47,13 @@ test('legal graph choices are rendered as actionable nodes only', () => {
   assert.doesNotMatch(html, /data-node-id="red-approach"[^>]*data-legal-choice="true"/);
 });
 
-test('terminal UI announces winner and disables roll interaction', () => {
+test('terminal UI announces winner and replaces normal turn affordance', () => {
   const match = createPlayableMatch();
   match.game.winner = 'blue';
   match.game.victory = { winner: 'blue', characterId: 'blue-1', kingNodeId: 'red-king' };
   const html = renderPlayableHTML(projectPlayableUI(match));
 
   assert.match(html, /KING REACHED — BLUE WINS/);
+  assert.match(html, /data-victory-state="blue"/);
   assert.match(html, /data-action="roll" disabled/);
 });
