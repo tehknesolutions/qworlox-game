@@ -4,11 +4,12 @@ import { createPlayableMatch } from '../game/core/playable-match.mjs';
 import { projectPlayableUI } from '../game/ui/playable-ui-model.mjs';
 import { renderPlayableHTML } from '../game/ui/playable-ui-render.mjs';
 
-test('rendered UI contains board, turn panel and roll control', () => {
+test('rendered UI contains board, active-player panel and roll control', () => {
   const html = renderPlayableHTML(projectPlayableUI(createPlayableMatch()));
 
   assert.match(html, /data-qworlox-board/);
-  assert.match(html, /Turn: BLUE/);
+  assert.match(html, /data-active-team="blue"/);
+  assert.match(html, /data-turn-status>BLUE/);
   assert.match(html, /data-action="roll"/);
 });
 
