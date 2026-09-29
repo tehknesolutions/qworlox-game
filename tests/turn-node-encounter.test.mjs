@@ -7,8 +7,11 @@ test('turn resolution detects encounter from canonical nodeId at center', () => 
   let game = createGame({ routeLength: 18 });
   game = moveCharacter(game, { characterId: 'blue-1', roll: 6 });
   game = moveCharacter(game, { characterId: 'red-1', roll: 6 });
-  game = moveCharacter(game, { characterId: 'blue-1', roll: 9 });
-  game = moveCharacter(game, { characterId: 'red-1', roll: 9 });
+
+  for (const roll of [3, 3, 3]) {
+    game = moveCharacter(game, { characterId: 'blue-1', roll });
+    game = moveCharacter(game, { characterId: 'red-1', roll });
+  }
 
   assert.equal(game.teams.blue.characters[0].nodeId, 'center');
   assert.equal(game.teams.red.characters[0].nodeId, 'center');
