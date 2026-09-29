@@ -37,6 +37,9 @@ export function moveCharacter(game, { characterId, roll }) {
     if (character.position >= next.routeLength) character.status = 'goal';
   }
   character.territory = territoryAtNode(next.territory, character.nodeId);
+  if (next.teams[next.activeTeam].characters.every(item => item.status === 'goal')) {
+    next.winner = next.activeTeam;
+  }
   next.activeTeam = next.activeTeam === TEAM_ORDER[0] ? TEAM_ORDER[1] : TEAM_ORDER[0];
   return next;
 }
