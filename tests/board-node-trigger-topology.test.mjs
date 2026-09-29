@@ -6,9 +6,9 @@ const board = {
   lanes: [{
     id: 'blue-lane',
     nodes: [
-      { id: 'blue-entry', type: 'ENTRY' },
+      { id: 'blue-entry', type: 'ENTRY', objective: { type: 'KING', team: 'blue' } },
       { id: 'blue-1', type: 'LANE', trigger: { type: 'DRAW_CARD' } },
-      { id: 'center', type: 'CENTER' }
+      { id: 'center', type: 'CENTER', objective: { type: 'KING', team: 'red' } }
     ]
   }]
 };
