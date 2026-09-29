@@ -45,7 +45,9 @@ export function resolveTurnWithEncounter(game, { characterId, roll, combat } = {
     }).combat;
 
     const pieces = Object.fromEntries(
-      Object.values(next.teams).flatMap(side => side.characters.map(item => [item.id, item]))
+      Object.entries(next.teams).flatMap(([pieceTeam, side]) =>
+        side.characters.map(item => [item.id, { ...item, team: pieceTeam }])
+      )
     );
     const consequence = applyCombatConsequence({ combat: combatResult, pieces, routeLength: next.routeLength });
     for (const [id, state] of Object.entries(consequence.pieces)) {
