@@ -35,8 +35,11 @@ export function buildBoardGraph(board) {
     }
   }
 
-  for (const team of KING_TEAMS) {
-    if (!kingObjectives[team]) throw new Error(`missing KING objective for ${team}`);
+  const hasAnyKingObjective = Object.keys(kingObjectives).length > 0;
+  if (hasAnyKingObjective) {
+    for (const team of KING_TEAMS) {
+      if (!kingObjectives[team]) throw new Error(`missing KING objective for ${team}`);
+    }
   }
 
   for (const edge of board.lateralEdges ?? []) {
@@ -78,7 +81,11 @@ export function shortestPathLength(graph, start, goal) {
   while (queue.length) {
     const [node, distance] = queue.shift();
     if (node === goal) return distance;
-    for (const next of graph.adjacency.get(node) ?? []) {
+    const neighbors = new Set(graph.adjacency.get(node) ?? []);
+    for (const [from, targets] of graph.adjacency) {
+      if (targets.includes(node)) neighbors.add(from);
+    }
+    for (const next of neighbors) {
       if (!visited.has(next)) {
         visited.add(next);
         queue.push([next, distance + 1]);

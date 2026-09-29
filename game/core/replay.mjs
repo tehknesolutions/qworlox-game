@@ -90,9 +90,10 @@ function applyMove(state, event, lastRoll) {
     throw new Error(`MOVE without preceding ROLL for ${event.characterId}`);
   }
   const current = state.characters[event.characterId];
-  const expectedOrigin = current?.nodeId ?? null;
-  if (event.fromNodeId !== expectedOrigin) {
-    throw new Error(`inconsistent MOVE origin for ${event.characterId}: expected ${expectedOrigin}, received ${event.fromNodeId}`);
+  if (current) {
+    if (event.fromNodeId !== current.nodeId) {
+      throw new Error(`inconsistent MOVE origin for ${event.characterId}: expected ${current.nodeId}, received ${event.fromNodeId}`);
+    }
   }
   state.characters[event.characterId] = { nodeId: event.toNodeId, team: event.team };
 }

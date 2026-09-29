@@ -18,8 +18,13 @@ export function simulateMatch({ routeLength, seed, maxTurns = 10000 }) {
       continue;
     }
 
+    const movedTeam = game.activeTeam;
     const characterId = chooseCharacter(game, legalCharacterIds);
     game = moveCharacter(game, { characterId, roll });
+
+    if (game.teams[movedTeam].characters.every(character => character.status === 'goal')) {
+      game = { ...game, winner: movedTeam, victory: { winner: movedTeam } };
+    }
   }
 
   if (!game.winner) {

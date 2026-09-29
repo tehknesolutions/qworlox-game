@@ -27,6 +27,7 @@ export const KING_REACH_PLAYABLE_BOARD_V1 = {
     }
   ],
   lateralEdges: [
+    { from: 'red-king', to: 'red-approach', bidirectional: false },
     { from: 'blue-approach', to: 'north-crossing' },
     { from: 'blue-approach', to: 'south-crossing' },
     { from: 'north-crossing', to: 'center' },

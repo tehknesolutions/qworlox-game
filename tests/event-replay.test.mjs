@@ -11,9 +11,7 @@ test('replay reconstructs observable movement card territory and game-event hist
     { seq: 5, type: 'TERRITORY_CONTROL_SET', nodeId: 'center', team: 'blue' },
     { seq: 6, type: 'GAME_EVENT', event: 'MARKET_DAY', sourceCardId: 'event-test' }
   ];
-
   const state = replayEvents(events);
-
   assert.deepEqual(state.characters['blue-1'], { nodeId: 'blue-entry', team: 'blue' });
   assert.deepEqual(state.rolls, [{ seq: 1, team: 'blue', roll: 6 }]);
   assert.deepEqual(state.landings, [{ seq: 3, team: 'blue', characterId: 'blue-1', nodeId: 'blue-entry' }]);
@@ -37,7 +35,9 @@ test('replay rejects unknown event types instead of inventing behavior', () => {
 
 test('replay is deterministic and does not mutate the source log', () => {
   const events = [
-    { seq: 1, type: 'MOVE', team: 'red', characterId: 'red-1', fromNodeId: null, toNodeId: 'red-entry' }
+    { seq: 1, type: 'ROLL', team: 'red', roll: 6 },
+    { seq: 2, type: 'MOVE', team: 'red', characterId: 'red-1', fromNodeId: null, toNodeId: 'red-entry' },
+    { seq: 3, type: 'LAND', team: 'red', characterId: 'red-1', nodeId: 'red-entry' }
   ];
   const snapshot = structuredClone(events);
   assert.deepEqual(replayEvents(events), replayEvents(events));
