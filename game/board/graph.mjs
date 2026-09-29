@@ -35,8 +35,11 @@ export function buildBoardGraph(board) {
     }
   }
 
-  for (const team of KING_TEAMS) {
-    if (!kingObjectives[team]) throw new Error(`missing KING objective for ${team}`);
+  const hasAnyKingObjective = Object.keys(kingObjectives).length > 0;
+  if (hasAnyKingObjective) {
+    for (const team of KING_TEAMS) {
+      if (!kingObjectives[team]) throw new Error(`missing KING objective for ${team}`);
+    }
   }
 
   for (const edge of board.lateralEdges ?? []) {
