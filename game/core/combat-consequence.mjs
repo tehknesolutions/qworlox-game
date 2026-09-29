@@ -40,6 +40,11 @@ export function applyCombatConsequence({ combat, positions, pieces, routeLength 
 
 function syncPieceNodes(pieces, routeLength) {
   for (const piece of Object.values(pieces)) {
+    if (piece.status === 'base') {
+      if (piece.position !== null) throw new RangeError(`base piece must have null position: ${piece.id}`);
+      piece.nodeId = null;
+      continue;
+    }
     if (!Number.isInteger(piece.position) || piece.position < 0 || piece.position > routeLength) {
       throw new RangeError(`invalid piece position: ${piece.id}`);
     }
