@@ -1,6 +1,7 @@
 import { createRng, rollD6 } from '../game/core/rng.mjs';
 import { createGame } from '../game/core/game.mjs';
 import { resolveTurnWithEncounter } from '../game/core/turn.mjs';
+import { buildMovementPath } from '../game/board/path.mjs';
 
 export function simulateMatchWithCombat({ routeLength, seed, maxTurns = 10000 }) {
   const rng = createRng(seed);
@@ -16,7 +17,7 @@ export function simulateMatchWithCombat({ routeLength, seed, maxTurns = 10000 })
     const team = game.activeTeam;
     const roll = rollD6(rng);
     const legal = legalCharacters(game, roll);
-    if (roll !== 6 && legal.length === 0) {
+    if (legal.length === 0) {
       noChoiceTurns += 1;
       game = passTurn(game);
       continue;
@@ -30,6 +31,9 @@ export function simulateMatchWithCombat({ routeLength, seed, maxTurns = 10000 })
     if (result.combat) {
       combats += 1;
       if (result.combat.draw) draws += 1;
+    }
+    if (game.teams[team].characters.every(character => character.status === 'goal')) {
+      game = { ...game, winner: team, victory: { winner: team } };
     }
   }
 
@@ -66,18 +70,20 @@ function chooseCharacter(game, ids, roll) {
 }
 
 function progress(c) { return c.status === 'base' ? -1 : c.position; }
-
-function find(game, id) {
-  return Object.values(game.teams).flatMap(t => t.characters).find(c => c.id === id);
-}
-
-function teamOf(game, id) {
-  return Object.entries(game.teams).find(([, side]) => side.characters.some(c => c.id === id))?.[0] ?? null;
-}
+function find(game, id) { return Object.values(game.teams).flatMap(t => t.characters).find(c => c.id === id); }
+function teamOf(game, id) { return Object.entries(game.teams).find(([, side]) => side.characters.some(c => c.id === id))?.[0] ?? null; }
 
 function combatFor(game, characterId, roll, rng) {
   const mover = find(game, characterId);
-  const opponent = Object.entries(game.teams).flatMap(([team, side]) => side.characters.map(c => ({ ...c, team }))).find(c => c.team !== teamOf(game, mover.id) && c.status !== 'base' && c.position === mover.position + (mover.status === 'base' ? 0 : roll));
+  const moverTeam = teamOf(game, characterId);
+  if (!mover || !moverTeam) return undefined;
+  const path = buildMovementPath({ routeLength: game.routeLength, team: moverTeam });
+  const destinationPosition = mover.status === 'base' ? 0 : Math.min(mover.position + roll, game.routeLength);
+  const destinationNode = path[destinationPosition];
+  const opponent = Object.entries(game.teams)
+    .filter(([team]) => team !== moverTeam)
+    .flatMap(([, side]) => side.characters)
+    .find(character => character.status !== 'base' && character.nodeId === destinationNode);
   return opponent ? {
     commonDie: rollD6(rng),
     attackerExclusiveDie: rollD6(rng),
