@@ -23,8 +23,8 @@ test('browser-rendered controller contract exposes player-facing HUD', () => {
   assert.match(initial.html, /data-character-id="blue-1"/);
   assert.match(initial.html, /data-action="roll"/);
   assert.match(initial.html, /data-player-hud/);
-  assert.match(initial.html, /data-turn-team="blue"/);
-  assert.match(initial.html, /data-die-result="empty"/);
+  assert.match(initial.html, /data-active-team="blue"/);
+  assert.match(initial.html, /data-die-result="—"/);
   assert.match(initial.html, /Select a BLUE character\./);
   assert.equal(initial.ui.activeTeam, 'blue');
   assert.equal(initial.ui.interactionLocked, false);
@@ -33,7 +33,7 @@ test('browser-rendered controller contract exposes player-facing HUD', () => {
 test('selected piece and die result are explicit HUD state', () => {
   const controller = createBrowserController({ random: () => 0.99 });
   const selected = controller.selectCharacter('blue-1');
-  assert.match(selected.html, /data-selected-character="blue-1"/);
+  assert.match(selected.html, /data-selected-piece="blue-1"/);
   assert.match(selected.html, /Roll the D6\./);
 
   const rolled = controller.roll();
@@ -53,7 +53,7 @@ test('browser controller renders movement choices after a routed piece rolls', (
 
   assert.equal(moving.pendingSteps, 2);
   assert.match(moving.html, /data-legal-choice="true"/);
-  assert.match(moving.html, /data-action-state="choose-route"/);
+  assert.match(moving.html, /data-action-state="rolled"/);
   assert.match(moving.html, /Choose a highlighted route\./);
   assert.match(moving.html, /blue-approach/);
 });
