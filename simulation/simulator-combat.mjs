@@ -15,7 +15,7 @@ export function simulateMatchWithCombat({ routeLength, seed, maxTurns = 10000 })
     turns += 1;
     const team = game.activeTeam;
     const roll = rollD6(rng);
-    const legal = legalCharacters(game);
+    const legal = legalCharacters(game, roll);
     if (roll !== 6 && legal.length === 0) {
       noChoiceTurns += 1;
       game = passTurn(game);
@@ -51,8 +51,10 @@ export function simulateBatchWithCombat({ routeLength, seed, matches, maxTurns =
   return { routeLength, seed, matches, blueWins, redWins, firstPlayerWinRate: blueWins / matches, averageTurns: totalTurns / matches, noChoiceTurns, encounters, combats, draws };
 }
 
-function legalCharacters(game) {
-  return game.teams[game.activeTeam].characters.filter(c => c.status !== 'goal').map(c => c.id);
+function legalCharacters(game, roll) {
+  return game.teams[game.activeTeam].characters
+    .filter(c => c.status !== 'goal' && (c.status !== 'base' || roll === 6))
+    .map(c => c.id);
 }
 
 function chooseCharacter(game, ids, roll) {
@@ -69,9 +71,13 @@ function find(game, id) {
   return Object.values(game.teams).flatMap(t => t.characters).find(c => c.id === id);
 }
 
+function teamOf(game, id) {
+  return Object.entries(game.teams).find(([, side]) => side.characters.some(c => c.id === id))?.[0] ?? null;
+}
+
 function combatFor(game, characterId, roll, rng) {
   const mover = find(game, characterId);
-  const opponent = Object.values(game.teams).flatMap(t => t.characters).find(c => c.team !== mover.team && c.status !== 'base' && c.position === mover.position + (mover.status === 'base' ? 0 : roll));
+  const opponent = Object.entries(game.teams).flatMap(([team, side]) => side.characters.map(c => ({ ...c, team }))).find(c => c.team !== teamOf(game, mover.id) && c.status !== 'base' && c.position === mover.position + (mover.status === 'base' ? 0 : roll));
   return opponent ? {
     commonDie: rollD6(rng),
     attackerExclusiveDie: rollD6(rng),
