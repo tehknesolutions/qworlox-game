@@ -1,4 +1,4 @@
-export function advanceOnGraph(graph, { startNodeId, steps, choices = [] }) {
+export function advanceOnGraph(graph, { startNodeId, steps, choices = [], movingTeam = null }) {
   if (!graph?.nodes?.has(startNodeId)) throw new Error(`unknown start node: ${startNodeId}`);
   if (!Number.isInteger(steps) || steps < 0) throw new TypeError('steps must be a non-negative integer');
   if (!Array.isArray(choices)) throw new TypeError('choices must be an array');
@@ -8,7 +8,10 @@ export function advanceOnGraph(graph, { startNodeId, steps, choices = [] }) {
 
   for (let step = 0; step < steps; step += 1) {
     const node = graph.nodes.get(current);
-    if (node?.objective?.type === 'KING') throw new Error('cannot move beyond KING objective');
+    const isFriendlyKingStart = movingTeam != null && graph.kingObjectives?.[movingTeam] === current;
+    if (node?.objective?.type === 'KING' && !isFriendlyKingStart) {
+      throw new Error('cannot move beyond KING objective');
+    }
 
     const neighbors = [...new Set(graph.adjacency.get(current) ?? [])];
     if (neighbors.length === 0) throw new Error(`no graph move available from ${current}`);
