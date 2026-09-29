@@ -55,3 +55,10 @@ button { font: inherit; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; } }
 @media (max-width: 900px) { .qworlox-arena { grid-template-columns: 1fr; } .qworlox-reserve { min-height: auto; } .qworlox-reserve > div { flex-direction: row; flex-wrap: wrap; justify-content: center; } }
 @media (max-width: 760px) { .qworlox-playtest-guide { grid-template-columns: 1fr; } .qworlox-playtest-guide small { grid-column: 1; } .qworlox-hud { grid-template-columns: 1fr auto; } .qworlox-roll-state { grid-column: 1 / -1; grid-row: 2; } .qworlox-board { grid-template-columns: 1fr; grid-template-areas: "blueking" "blueapproach" "north" "center" "south" "redapproach" "redking"; min-height: auto; padding: .45rem; background: #151a24; } .qworlox-route-layer { display: none; } .qworlox-node { min-height: 110px; } .qworlox-king { font-size: 1.25rem; } }
+
+.qworlox-interaction-feedback { min-height: 1.5rem; margin: .65rem 0; padding: .65rem .85rem; border: 1px solid transparent; border-radius: .75rem; background: #151a24; }
+.qworlox-interaction-feedback--error { border-color: #ff5757; color: #ffd8d8; }
+.qworlox-interaction-feedback--error::before { content: "ACTION NOT APPLIED · "; font-weight: 900; letter-spacing: .05em; }
+[data-feedback-phase="moving"] [data-current-move="true"] { will-change: transform; }
+[data-feedback-phase="turn-changed"] .qworlox-turn { will-change: transform, opacity; }
+[data-interaction-locked="true"] [data-action="roll"] { pointer-events: none; }
