@@ -14,9 +14,9 @@ test('shared deck contains the seven defined QWorlox card families', () => {
 test('drawing moves a card from shared draw pile to hand', () => {
   const state = createDeckState();
   const result = drawCard(state);
-  assert.equal(result.hand.length, 1);
-  assert.equal(result.draw.length, 6);
-  assert.equal(result.discard.length, 0);
+  assert.equal(result.state.hand.length, 1);
+  assert.equal(result.state.draw.length, 6);
+  assert.equal(result.state.discard.length, 0);
 });
 
 test('category behavior is represented without hard-coding final effects', () => {
