@@ -3,12 +3,18 @@ import assert from 'node:assert/strict';
 import { createGame, moveCharacter } from '../game/core/game.mjs';
 import { resolveTurnWithEncounter } from '../game/core/turn.mjs';
 
-test('Game Core can move into an occupied contested node and resolve combat', () => {
-  let game = createGame({ routeLength: 18 });
-  game = moveCharacter(game, { characterId: 'blue-1', roll: 6 });
-  game = moveCharacter(game, { characterId: 'red-1', roll: 6 });
-  game = moveCharacter(game, { characterId: 'blue-1', roll: 1 });
-  game = moveCharacter(game, { characterId: 'red-1', roll: 2 });
+function placeOnRoute(game, team, characterIndex, { position, nodeId }) {
+  const character = game.teams[team].characters[characterIndex];
+  character.status = 'route';
+  character.position = position;
+  character.nodeId = nodeId;
+}
+
+test('Game Core moves into the shared center node and resolves combat', () => {
+  const game = createGame({ routeLength: 18 });
+  placeOnRoute(game, 'blue', 0, { position: 8, nodeId: 'blue-8' });
+  placeOnRoute(game, 'red', 0, { position: 9, nodeId: 'center' });
+  game.activeTeam = 'blue';
 
   const result = resolveTurnWithEncounter(game, {
     characterId: 'blue-1',
@@ -23,16 +29,16 @@ test('Game Core can move into an occupied contested node and resolve combat', ()
   });
 
   assert.equal(result.encounter.type, 'ENCOUNTER');
+  assert.equal(result.encounter.nodeId, 'center');
   assert.equal(result.combat.winnerId, 'blue-1');
-  assert.equal(result.game.teams.blue.characters[0].position, 3);
+  assert.equal(result.game.teams.blue.characters[0].position, 10);
 });
 
 test('encounter consequence preserves characters still in base', () => {
-  let game = createGame({ routeLength: 18 });
-  game = moveCharacter(game, { characterId: 'blue-1', roll: 6 });
-  game = moveCharacter(game, { characterId: 'red-1', roll: 6 });
-  game = moveCharacter(game, { characterId: 'blue-1', roll: 1 });
-  game = moveCharacter(game, { characterId: 'red-1', roll: 2 });
+  const game = createGame({ routeLength: 18 });
+  placeOnRoute(game, 'blue', 0, { position: 8, nodeId: 'blue-8' });
+  placeOnRoute(game, 'red', 0, { position: 9, nodeId: 'center' });
+  game.activeTeam = 'blue';
 
   const result = resolveTurnWithEncounter(game, {
     characterId: 'blue-1',
