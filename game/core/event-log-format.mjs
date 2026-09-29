@@ -15,8 +15,8 @@ const EVENT_FIELDS = {
 
 export function serializeEventLog(events) {
   if (!Array.isArray(events)) throw new TypeError('events must be an array');
-  assertEventEntries(events);
   assertJsonSafe(events);
+  assertEventEntries(events);
 
   return JSON.stringify({ format: FORMAT, version: VERSION, events });
 }
