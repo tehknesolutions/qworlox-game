@@ -44,10 +44,23 @@ test('graph-native movement requires an explicit choice at a branch', () => {
   }), /movement choice required/);
 });
 
-test('graph-native movement cannot continue beyond a King objective', () => {
+test('graph-native movement can leave the moving team own King start', () => {
+  const result = advanceOnGraph(graph, {
+    startNodeId: 'blue-king',
+    steps: 1,
+    choices: ['blue-approach'],
+    movingTeam: 'blue'
+  });
+
+  assert.deepEqual(result.path, ['blue-king', 'blue-approach']);
+  assert.equal(result.nodeId, 'blue-approach');
+});
+
+test('graph-native movement cannot continue beyond the opponent King objective', () => {
   assert.throws(() => advanceOnGraph(graph, {
     startNodeId: 'red-approach',
     steps: 2,
-    choices: ['red-king', 'red-approach']
+    choices: ['red-king', 'red-approach'],
+    movingTeam: 'blue'
   }), /cannot move beyond KING objective/);
 });
