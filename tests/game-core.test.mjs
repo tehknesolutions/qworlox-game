@@ -35,7 +35,7 @@ test('an on-route character advances by the movement roll', () => {
 });
 
 test('a team wins only after both characters reach goal', () => {
-  let game = createGame({ routeLength: 2 });
+  let game = createGame({ routeLength: 4 });
   game = moveCharacter(game, { characterId: 'blue-1', roll: 6 });
   game = moveCharacter(game, { characterId: 'red-1', roll: 6 });
   game = moveCharacter(game, { characterId: 'blue-1', roll: 4 });
