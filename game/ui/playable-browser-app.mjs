@@ -1,4 +1,5 @@
 import { createBrowserController } from './playable-browser-controller.mjs';
+import { copySeedText } from './copy-seed.mjs';
 
 const root = document.querySelector('#qworlox-app');
 const controller = createBrowserController();
@@ -17,7 +18,11 @@ root.addEventListener('click', async event => {
   feedback = { kind: 'idle', text: '' };
   try {
     if (restart) { controller.restart(); message = 'New game started. Select a BLUE character.'; }
-    else if (copySeed) { await copyText(copySeed.dataset.seed); feedback = { kind: 'success', text: 'Seed copied.' }; message = `Reproducibility seed: ${copySeed.dataset.seed}.`; }
+    else if (copySeed) {
+      const seed = copySeed.dataset.seed; const result = await copySeedText(seed);
+      feedback = result.copied ? { kind: 'success', text: 'Seed copied.' } : { kind: 'info', text: 'Clipboard unavailable — copy the visible seed manually.' };
+      message = `Reproducibility seed: ${seed}.`;
+    }
     else if (piece) { controller.selectCharacter(piece.dataset.characterId); message = `Selected ${piece.dataset.characterId}.`; }
     else if (roll) { const result = controller.roll(); message = result.pendingSteps > 0 ? `Rolled ${result.roll}. Choose ${result.pendingSteps} move${result.pendingSteps === 1 ? '' : 's'}.` : `Rolled ${result.roll}.`; }
     else if (legalNode) { const result = controller.chooseNode(legalNode.dataset.nodeId); message = result.ui.announcement ?? (result.pendingSteps > 0 ? `Choose ${result.pendingSteps} more move${result.pendingSteps === 1 ? '' : 's'}.` : `Turn: ${result.ui.activeTeam.toUpperCase()}.`); }
@@ -26,5 +31,4 @@ root.addEventListener('click', async event => {
 });
 
 render();
-async function copyText(value) { if (!navigator.clipboard?.writeText) throw new Error('Clipboard is not available in this browser'); await navigator.clipboard.writeText(String(value)); }
 function escapeHTML(value) { return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;'); }
