@@ -1,32 +1,9 @@
 export function projectPlayableUI(match, { selectedCharacterId = null } = {}) {
   if (!match?.game || !match?.graph) throw new TypeError('invalid playable match');
-  const nodes = [...match.graph.nodes.values()].map(node => structuredClone(node));
-  const pieces = Object.entries(match.game.teams).flatMap(([team, state]) => state.characters.map(character => ({ id: character.id, team, status: character.status, nodeId: character.nodeId ?? null })));
-  const interactionLocked = Boolean(match.game.winner);
-  const selectedPiece = selectedCharacterId ? pieces.find(piece => piece.id === selectedCharacterId) : null;
-  let legalNextNodes = [];
-  if (!interactionLocked && selectedPiece?.nodeId) legalNextNodes = [...new Set(match.graph.adjacency.get(selectedPiece.nodeId) ?? [])];
-  return {
-    activeTeam: match.game.activeTeam,
-    winner: match.game.winner,
-    victory: match.game.victory ? structuredClone(match.game.victory) : null,
-    interactionLocked,
-    announcement: match.game.winner ? `KING REACHED — ${match.game.winner.toUpperCase()} WINS` : null,
-    selectedCharacterId,
-    legalNextNodes,
-    combatFeedback: latestCombatFeedback(match.game.events ?? []),
-    nodes,
-    pieces
-  };
+  const nodes = [...match.graph.nodes.values()].map(node => structuredClone(node)); const pieces = Object.entries(match.game.teams).flatMap(([team, state]) => state.characters.map(character => ({ id: character.id, team, status: character.status, nodeId: character.nodeId ?? null })));
+  const interactionLocked = Boolean(match.game.winner); const selectedPiece = selectedCharacterId ? pieces.find(piece => piece.id === selectedCharacterId) : null; const pendingCombatAdvance = match.game.pendingCombatAdvance ? structuredClone(match.game.pendingCombatAdvance) : null; let legalNextNodes = [];
+  if (!interactionLocked && pendingCombatAdvance) legalNextNodes = [...pendingCombatAdvance.legalChoices]; else if (!interactionLocked && selectedPiece?.nodeId) legalNextNodes = [...new Set(match.graph.adjacency.get(selectedPiece.nodeId) ?? [])];
+  return { activeTeam: match.game.activeTeam, winner: match.game.winner, victory: match.game.victory ? structuredClone(match.game.victory) : null, interactionLocked, announcement: match.game.winner ? `KING REACHED — ${match.game.winner.toUpperCase()} WINS` : null, selectedCharacterId, pendingCombatAdvance, legalNextNodes, combatFeedback: latestCombatFeedback(match.game.events ?? []), nodes, pieces };
 }
-
-function latestCombatFeedback(events) {
-  const consequenceIndex = events.findLastIndex?.(event => event.type === 'COMBAT_CONSEQUENCE') ?? findLastIndex(events, event => event.type === 'COMBAT_CONSEQUENCE');
-  if (consequenceIndex < 0) return null;
-  const consequence = events[consequenceIndex];
-  const combat = [...events.slice(0, consequenceIndex)].reverse().find(event => event.type === 'COMBAT_RESOLVED');
-  const encounter = [...events.slice(0, consequenceIndex)].reverse().find(event => event.type === 'ENCOUNTER');
-  if (!combat || !encounter) return null;
-  return { nodeId: encounter.nodeId, attackerId: encounter.attackerId, defenderId: encounter.defenderId, attackerValue: combat.attackerValue, defenderValue: combat.defenderValue, draw: combat.draw, winnerId: combat.winnerId, loserId: combat.loserId, consequence: consequence.consequence };
-}
+function latestCombatFeedback(events) { const consequenceIndex = events.findLastIndex?.(event => event.type === 'COMBAT_CONSEQUENCE') ?? findLastIndex(events, event => event.type === 'COMBAT_CONSEQUENCE'); if (consequenceIndex < 0) return null; const consequence = events[consequenceIndex]; const combat = [...events.slice(0, consequenceIndex)].reverse().find(event => event.type === 'COMBAT_RESOLVED'); const encounter = [...events.slice(0, consequenceIndex)].reverse().find(event => event.type === 'ENCOUNTER'); if (!combat || !encounter) return null; return { nodeId: encounter.nodeId, attackerId: encounter.attackerId, defenderId: encounter.defenderId, attackerValue: combat.attackerValue, defenderValue: combat.defenderValue, attackerBreakdown: combat.attackerBreakdown ? structuredClone(combat.attackerBreakdown) : null, defenderBreakdown: combat.defenderBreakdown ? structuredClone(combat.defenderBreakdown) : null, draw: combat.draw, winnerId: combat.winnerId, loserId: combat.loserId, consequence: consequence.consequence }; }
 function findLastIndex(items, predicate) { for (let i = items.length - 1; i >= 0; i -= 1) if (predicate(items[i])) return i; return -1; }

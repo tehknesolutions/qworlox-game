@@ -5,7 +5,17 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "simulate": "node simulation/compare.mjs"
+    "simulate": "node simulation/compare.mjs",
+    "diagnose:board": "node game/board/generate-structural-report.mjs",
+    "diagnose:board:json": "node game/board/generate-structural-report.mjs --json",
+    "capture:board": "node game/board/run-structural-baseline-capture.mjs",
+    "accept:board": "node game/board/run-structural-baseline-accept.mjs",
+    "promote:canonical-board": "node game/board/run-canonical-baseline-promote.mjs",
+    "compare:board": "node game/board/run-structural-baseline-compare.mjs",
+    "verify:accepted-board": "node game/board/run-verify-accepted-board.mjs",
+    "verify:canonical-board": "node game/board/run-canonical-baseline-gate.mjs",
+    "verify:board": "node -e \"import('./game/board/generate-structural-report.mjs').then(async ({generateStructuralReport}) => { const {validateStructuralBaseline}=await import('./game/board/structural-regression.mjs'); const result=generateStructuralReport(); const check=validateStructuralBaseline(result); if(!check.ok){console.error(check.errors.join('\\n')); process.exit(1)} console.log('STRUCTURAL_BASELINE=PASS') })\"",
+    "gate:p5": "npm test && npm run verify:board && npm run verify:canonical-board && npm run diagnose:board"
   },
   "engines": {
     "node": ">=22"
