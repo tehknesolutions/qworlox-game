@@ -8,6 +8,7 @@
     "simulate": "node simulation/compare.mjs",
     "diagnose:board": "node game/board/generate-structural-report.mjs",
     "diagnose:board:json": "node game/board/generate-structural-report.mjs --json",
+    "compare:board": "node game/board/run-structural-baseline-compare.mjs",
     "verify:board": "node -e \"import('./game/board/generate-structural-report.mjs').then(async ({generateStructuralReport}) => { const {validateStructuralBaseline}=await import('./game/board/structural-regression.mjs'); const result=generateStructuralReport(); const check=validateStructuralBaseline(result); if(!check.ok){console.error(check.errors.join('\\n')); process.exit(1)} console.log('STRUCTURAL_BASELINE=PASS') })\"",
     "gate:p5": "npm test && npm run verify:board && npm run diagnose:board"
   },
