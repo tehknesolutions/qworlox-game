@@ -15,8 +15,8 @@ export function playTurn(match, { characterId, roll, choices = [], combatDie = r
   else { if (!character.nodeId) throw new Error(`${characterId} has no graph node`); const movement = advanceOnGraph(match.graph, { startNodeId: character.nodeId, steps: roll, choices, movingTeam: movedTeam }); character.nodeId = movement.nodeId; character.position = null; }
   appendTurnEvents(game, { movedTeam, characterId, roll, fromNodeId, toNodeId: character.nodeId });
   const combat = applyEncounterCombat(game, match.graph, { attacker: character, movedTeam, commonDie: combatDie, combatChoice });
-  if (combat?.requiresChoice) { game.pendingCombatAdvance = { winnerId: combat.winnerId, loserId: combat.loserId, legalChoices: combat.legalChoices, movedTeam }; return { ...match, game }; }
-  finalizeTurn(game, match.graph, { movedTeam, characterId }); return { ...match, game };
+  if (combat?.requiresChoice) { const winnerTeam = findCharacterTeam(game, combat.winnerId); game.pendingCombatAdvance = { winnerId: combat.winnerId, winnerTeam, loserId: combat.loserId, legalChoices: combat.legalChoices, movedTeam }; return { ...match, game }; }
+  finalizeTurn(game, match.graph, { turnTeam: movedTeam, victoryTeam: combat?.winnerId ? findCharacterTeam(game, combat.winnerId) : movedTeam, characterId: combat?.winnerId ?? characterId }); return { ...match, game };
 }
 
 export function resolvePendingCombatAdvance(match, nodeId) {
@@ -25,7 +25,7 @@ export function resolvePendingCombatAdvance(match, nodeId) {
   const applied = applyGraphCombatConsequence({ graph: match.graph, combat: { draw: false, winnerId: pending.winnerId, loserId: pending.loserId }, pieces, choice: nodeId });
   for (const team of Object.values(game.teams)) for (const piece of team.characters) Object.assign(piece, applied.pieces[piece.id]);
   game.events.push({ seq: game.events.length + 1, type: 'COMBAT_ADVANCE_CHOSEN', winnerId: pending.winnerId, nodeId: applied.winnerNodeId }); delete game.pendingCombatAdvance;
-  finalizeTurn(game, match.graph, { movedTeam: pending.movedTeam, characterId: pending.winnerId }); return { ...match, game };
+  finalizeTurn(game, match.graph, { turnTeam: pending.movedTeam, victoryTeam: pending.winnerTeam, characterId: pending.winnerId }); return { ...match, game };
 }
 
 function applyEncounterCombat(game, graph, { attacker, movedTeam, commonDie, combatChoice }) {
@@ -34,7 +34,8 @@ function applyEncounterCombat(game, graph, { attacker, movedTeam, commonDie, com
   const pieces = Object.fromEntries(Object.values(game.teams).flatMap(team => team.characters).map(piece => [piece.id, piece])); const applied = applyGraphCombatConsequence({ graph, combat: resolved.combat, pieces, choice: combatChoice }); for (const team of Object.values(game.teams)) for (const piece of team.characters) Object.assign(piece, applied.pieces[piece.id]);
   game.events.push({ seq: game.events.length + 1, type: 'COMBAT_CONSEQUENCE', consequence: applied.consequence, winnerId: resolved.combat.winnerId, loserId: resolved.combat.loserId, winnerNodeId: applied.winnerNodeId, requiresChoice: applied.requiresChoice, legalChoices: applied.legalChoices }); return { ...applied, winnerId: resolved.combat.winnerId, loserId: resolved.combat.loserId };
 }
-function finalizeTurn(game, graph, { movedTeam, characterId }) { const character = game.teams[movedTeam].characters.find(item => item.id === characterId); const victory = character ? evaluateKingReach({ graph, team: movedTeam, characterId, nodeId: character.nodeId }) : null; if (victory) { game.winner = victory.winner; game.victory = victory; character.status = 'goal'; game.events.push({ seq: game.events.length + 1, type: 'KING_REACHED', team: victory.winner, characterId: victory.characterId, kingNodeId: victory.kingNodeId }); } else game.activeTeam = movedTeam === 'blue' ? 'red' : 'blue'; }
+function finalizeTurn(game, graph, { turnTeam, victoryTeam, characterId }) { const character = game.teams[victoryTeam]?.characters.find(item => item.id === characterId); const victory = character ? evaluateKingReach({ graph, team: victoryTeam, characterId, nodeId: character.nodeId }) : null; if (victory) { game.winner = victory.winner; game.victory = victory; character.status = 'goal'; game.events.push({ seq: game.events.length + 1, type: 'KING_REACHED', team: victory.winner, characterId: victory.characterId, kingNodeId: victory.kingNodeId }); } else game.activeTeam = turnTeam === 'blue' ? 'red' : 'blue'; }
+function findCharacterTeam(game, characterId) { for (const [team, state] of Object.entries(game.teams)) if (state.characters.some(character => character.id === characterId)) return team; throw new Error(`unknown character team: ${characterId}`); }
 function appendTurnEvents(game, { movedTeam, characterId, roll, fromNodeId, toNodeId }) { game.events.push({ seq: game.events.length + 1, type: 'ROLL', team: movedTeam, roll }); game.events.push({ seq: game.events.length + 1, type: 'MOVE', team: movedTeam, characterId, fromNodeId, toNodeId }); game.events.push({ seq: game.events.length + 1, type: 'LAND', team: movedTeam, characterId, nodeId: toNodeId }); }
 function assertMatch(match) { if (!match?.game || !match?.graph) throw new TypeError('invalid playable match'); }
 function assertRoll(roll) { if (!Number.isInteger(roll) || roll < 1 || roll > 6) throw new RangeError('roll must be an integer from 1 to 6'); }
