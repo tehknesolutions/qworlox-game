@@ -10,6 +10,7 @@
     "diagnose:board:json": "node game/board/generate-structural-report.mjs --json",
     "capture:board": "node game/board/run-structural-baseline-capture.mjs",
     "accept:board": "node game/board/run-structural-baseline-accept.mjs",
+    "promote:canonical-board": "node game/board/run-canonical-baseline-promote.mjs",
     "compare:board": "node game/board/run-structural-baseline-compare.mjs",
     "verify:accepted-board": "node game/board/run-verify-accepted-board.mjs",
     "verify:canonical-board": "node game/board/run-canonical-baseline-gate.mjs",
