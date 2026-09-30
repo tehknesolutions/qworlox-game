@@ -3,10 +3,14 @@ import { createBrowserController } from './playable-browser-controller.mjs';
 const root = document.querySelector('#qworlox-app');
 const controller = createBrowserController();
 let message = 'Select a piece from the active team.';
+let feedback = { kind: 'idle', text: '' };
 
 function render() {
   const view = controller.view();
-  root.innerHTML = `${view.html}<p class="qworlox-message" role="status">${message}</p>`;
+  const feedbackMarkup = feedback.text
+    ? `<div class="qworlox-interaction-feedback qworlox-interaction-feedback--${feedback.kind}" data-interaction-feedback role="alert" aria-live="polite">${escapeHTML(feedback.text)}</div>`
+    : '<div class="qworlox-interaction-feedback" data-interaction-feedback aria-live="polite"></div>';
+  root.innerHTML = `${view.html}${feedbackMarkup}<p class="qworlox-message" role="status" aria-live="polite">${escapeHTML(message)}</p>`;
 }
 
 root.addEventListener('click', event => {
@@ -14,6 +18,7 @@ root.addEventListener('click', event => {
   const roll = event.target.closest('[data-action="roll"]');
   const legalNode = event.target.closest('[data-legal-choice="true"]');
 
+  feedback = { kind: 'idle', text: '' };
   try {
     if (piece) {
       controller.selectCharacter(piece.dataset.characterId);
@@ -30,10 +35,15 @@ root.addEventListener('click', event => {
         : `Turn: ${result.ui.activeTeam.toUpperCase()}.`);
     }
   } catch (error) {
-    message = error.message;
+    feedback = { kind: 'error', text: error.message };
+    message = 'Action not applied. Choose a highlighted action and try again.';
   }
 
   render();
 });
 
 render();
+
+function escapeHTML(value) {
+  return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+}
