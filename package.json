@@ -7,6 +7,7 @@
     "test": "node --test tests/*.test.mjs",
     "simulate": "node simulation/compare.mjs",
     "diagnose:board": "node game/board/generate-structural-report.mjs",
+    "diagnose:board:json": "node game/board/generate-structural-report.mjs --json",
     "gate:p5": "npm test && npm run diagnose:board"
   },
   "engines": {
