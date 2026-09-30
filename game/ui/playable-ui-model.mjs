@@ -4,8 +4,10 @@ export function projectPlayableUI(match, { selectedCharacterId = null } = {}) {
   const pieces = Object.entries(match.game.teams).flatMap(([team, state]) => state.characters.map(character => ({ id: character.id, team, status: character.status, nodeId: character.nodeId ?? null })));
   const interactionLocked = Boolean(match.game.winner);
   const selectedPiece = selectedCharacterId ? pieces.find(piece => piece.id === selectedCharacterId) : null;
+  const pendingCombatAdvance = match.game.pendingCombatAdvance ? structuredClone(match.game.pendingCombatAdvance) : null;
   let legalNextNodes = [];
-  if (!interactionLocked && selectedPiece?.nodeId) legalNextNodes = [...new Set(match.graph.adjacency.get(selectedPiece.nodeId) ?? [])];
+  if (!interactionLocked && pendingCombatAdvance) legalNextNodes = [...pendingCombatAdvance.legalChoices];
+  else if (!interactionLocked && selectedPiece?.nodeId) legalNextNodes = [...new Set(match.graph.adjacency.get(selectedPiece.nodeId) ?? [])];
   return {
     activeTeam: match.game.activeTeam,
     winner: match.game.winner,
@@ -13,6 +15,7 @@ export function projectPlayableUI(match, { selectedCharacterId = null } = {}) {
     interactionLocked,
     announcement: match.game.winner ? `KING REACHED — ${match.game.winner.toUpperCase()} WINS` : null,
     selectedCharacterId,
+    pendingCombatAdvance,
     legalNextNodes,
     combatFeedback: latestCombatFeedback(match.game.events ?? []),
     nodes,
