@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "simulate": "node simulation/compare.mjs"
+    "simulate": "node simulation/compare.mjs",
+    "diagnose:board": "node game/board/generate-structural-report.mjs",
+    "gate:p5": "npm test && npm run diagnose:board"
   },
   "engines": {
     "node": ">=22"
