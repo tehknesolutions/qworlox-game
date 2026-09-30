@@ -9,4 +9,17 @@ export function generateStructuralReport() {
   return { boardId: KING_REACH_PLAYABLE_BOARD_V1.id, analysis, markdown: formatStructuralReport(analysis) };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) process.stdout.write(generateStructuralReport().markdown);
+export function formatStructuralJSON(result) {
+  return JSON.stringify({
+    schemaVersion: 1,
+    boardId: result.boardId,
+    blue: result.analysis.blue.balance,
+    red: result.analysis.red.balance,
+    symmetry: result.analysis.symmetry
+  }, null, 2) + '\n';
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const result = generateStructuralReport();
+  process.stdout.write(process.argv.includes('--json') ? formatStructuralJSON(result) : result.markdown);
+}
